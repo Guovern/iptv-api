@@ -174,7 +174,7 @@ def get_total_urls(info_list: list[ChannelData], ipv_type_prefer, origin_type_pr
         if not origin:
             continue
 
-        if origin in ["live", "hls"]:
+        if origin == "hls":
             if not rtmp_type or (rtmp_type and origin in rtmp_type):
                 total_urls.append(info)
                 continue
@@ -276,7 +276,7 @@ def check_url_by_keywords(url, keywords=None):
     Check by URL keywords
     """
     if not keywords:
-        return True
+        return False
     else:
         return any(keyword in url for keyword in keywords)
 
@@ -321,13 +321,12 @@ def merge_objects(*objects, match_key=None):
     return merged_dict
 
 
-def get_ip_address():
-    """
-    Get the IP address
-    """
-    host = os.getenv("APP_HOST", config.app_host)
-    port = os.getenv("APP_PORT", config.app_port)
-    return f"{host}:{port}"
+def get_public_url(port: int = config.app_port) -> str:
+    host = config.public_domain or config.app_host
+    scheme = config.public_scheme
+    default_port = 80 if scheme == 'http' else 443
+    port_part = f":{port}" if port != default_port else ""
+    return f"{scheme}://{host}{port_part}"
 
 
 def get_epg_url():
@@ -339,7 +338,7 @@ def get_epg_url():
         ref = os.getenv("GITHUB_REF", "gd")
         return join_url(config.cdn_url, f"https://raw.githubusercontent.com/{repository}/{ref}/output/epg/epg.gz")
     else:
-        return f"{get_ip_address()}/epg/epg.gz"
+        return f"{get_public_url()}/epg/epg.gz"
 
 
 def convert_to_m3u(path=None, first_channel_name=None, data=None):
@@ -428,7 +427,7 @@ def remove_duplicates_from_list(data_list, seen, filter_host=False, ipv6_support
     """
     unique_list = []
     for item in data_list:
-        if item["origin"] in ["whitelist", "live", "hls"]:
+        if item["origin"] in ["whitelist", "hls"]:
             continue
         if not ipv6_support and item["ipv_type"] == "ipv6":
             continue
@@ -756,3 +755,19 @@ def get_urls_len(data) -> int:
         for url_info in url_info_list
     )
     return len(urls)
+
+
+def render_nginx_conf(nginx_conf_template, nginx_conf):
+    """
+    Render the nginx conf file
+    """
+
+    with open(nginx_conf_template, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    content = content.replace('${APP_PORT}', str(config.app_port))
+    content = content.replace('${NGINX_HTTP_PORT}', str(config.nginx_http_port))
+    content = content.replace('${NGINX_RTMP_PORT}', str(config.nginx_rtmp_port))
+
+    with open(nginx_conf, 'w', encoding='utf-8') as f:
+        f.write(content)

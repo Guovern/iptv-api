@@ -362,10 +362,12 @@ Taking the host path /etc/docker as an example:
 
 #### Environment Variables:
 
-| Variable | Description          | Default Value    |
-|:---------|:---------------------|:-----------------|
-| APP_HOST | Service host address | Local machine IP |
-| APP_PORT | Service port         | 8000             |
+| Variable        | Description             | Default Value    |
+|:----------------|:------------------------|:-----------------|
+| APP_HOST        | Service host address    | Local machine IP |
+| APP_PORT        | Service port            | 8000             |
+| NGINX_HTTP_PORT | Nginx HTTP service port | 8080             |
+| NGINX_RTMP_PORT | Nginx RTMP service port | 1935             |
 
 In addition to the environment variables listed above, you can also override the [configuration items](./config_en.md)
 in the
@@ -393,25 +395,18 @@ configuration file via environment variables.
 - RTMP Streaming:
 
 > [!NOTE]
-> 1. To stream local video sources, create a `live` or `hls` (recommended) folder in the `config` directory.
-> 2. The `live` folder is used for live streaming interfaces, and the `hls` folder is used for HLS streaming interfaces.
-> 3. Place video files named after the `channel name` into these folders, and the program will automatically stream them
-     to the corresponding channels.
-> 4. Visit http://localhost:8080/stat to view real-time streaming status statistics.
+> 1. After enabling streaming, obtained sources (for example subscription sources) will be streamed by default.
+> 2. To stream local video sources, create an `hls` folder inside the `config` directory.
+> 3. Place video files named with the `channel name` into that folder; the program will automatically stream them to the
+     corresponding channels.
+> 4. Visit `http://localhost:8080/stat` to view real-time streaming status and statistics.
 
-| Streaming Endpoint | Description                      |
-|:-------------------|:---------------------------------|
-| /live              | live streaming endpoint          |
-| /hls               | hls streaming endpoint           |
-| /live/txt          | live txt streaming endpoint      |
-| /hls/txt           | hls txt streaming endpoint       |
-| /live/m3u          | live m3u streaming endpoint      |
-| /hls/m3u           | hls m3u streaming endpoint       |
-| /live/ipv4/txt     | live ipv4 txt streaming endpoint |
-| /hls/ipv4/txt      | hls ipv4 txt streaming endpoint  |
-| /live/ipv4/m3u     | live ipv4 m3u streaming endpoint |
-| /hls/ipv4/m3u      | hls ipv4 m3u streaming endpoint  |
-| /live/ipv6/txt     | live ipv6 txt streaming endpoint |
-| /hls/ipv6/txt      | hls ipv6 txt streaming endpoint  |
-| /live/ipv6/m3u     | live ipv6 m3u streaming endpoint |
-| /hls/ipv6/m3u      | hls ipv6 m3u streaming endpoint  |
+| Streaming Endpoint | Description                     |
+|:-------------------|:--------------------------------|
+| /hls               | hls streaming endpoint          |
+| /hls/txt           | hls txt streaming endpoint      |
+| /hls/m3u           | hls m3u streaming endpoint      |
+| /hls/ipv4/txt      | hls ipv4 txt streaming endpoint |
+| /hls/ipv4/m3u      | hls ipv4 m3u streaming endpoint |
+| /hls/ipv6/txt      | hls ipv6 txt streaming endpoint |
+| /hls/ipv6/m3u      | hls ipv6 m3u streaming endpoint |

@@ -318,10 +318,12 @@ docker run -d -p 8000:8000 guovern/iptv-api
 
 #### 环境变量：
 
-| 变量       | 描述       | 默认值  |
-|:---------|:---------|:-----|
-| APP_HOST | 服务host地址 | 本机IP |
-| APP_PORT | 服务端口     | 8000 |
+| 变量              | 描述             | 默认值  |
+|:----------------|:---------------|:-----|
+| APP_HOST        | 服务host地址       | 本机IP |
+| APP_PORT        | 服务端口           | 8000 |
+| NGINX_HTTP_PORT | Nginx HTTP服务端口 | 8080 |
+| NGINX_RTMP_PORT | Nginx RTMP服务端口 | 1935 |
 
 除了以上环境变量，还支持通过环境变量覆盖配置文件中的[配置项](./config.md)
 
@@ -347,24 +349,17 @@ docker run -d -p 8000:8000 guovern/iptv-api
 - RTMP 推流：
 
 > [!NOTE]
-> 1. 如果需要对本地视频源进行推流，可在`config`目录下新建`live`或`hls`（推荐）文件夹
-> 2. live文件夹用于推流live接口，hls文件夹用于推流hls接口
+> 1. 开启推流后，默认会将获取到的接口（如订阅源）进行推流
+> 2. 如果需要对本地视频源进行推流，可在`config`目录下新建`hls`文件夹
 > 3. 将以`频道名称命名`的视频文件放入其中，程序会自动推流到对应的频道中
 > 4. 可访问 http://localhost:8080/stat 查看实时推流状态统计数据
 
-| 推流接口           | 描述                |
-|:---------------|:------------------|
-| /live          | 推流live接口          |
-| /hls           | 推流hls接口           |
-| /live/txt      | 推流live txt接口      |
-| /hls/txt       | 推流hls txt接口       |
-| /live/m3u      | 推流live m3u接口      |
-| /hls/m3u       | 推流hls m3u接口       |
-| /live/ipv4/txt | 推流live ipv4 txt接口 |
-| /hls/ipv4/txt  | 推流hls ipv4 txt接口  |
-| /live/ipv4/m3u | 推流live ipv4 m3u接口 |
-| /hls/ipv4/m3u  | 推流hls ipv4 m3u接口  |
-| /live/ipv6/txt | 推流live ipv6 txt接口 |
-| /hls/ipv6/txt  | 推流hls ipv6 txt接口  |
-| /live/ipv6/m3u | 推流live ipv6 m3u接口 |
-| /hls/ipv6/m3u  | 推流hls ipv6 m3u接口  |
+| 推流接口          | 描述           |
+|:--------------|:-------------|
+| /hls          | 推流接口         |
+| /hls/txt      | 推流txt接口      |
+| /hls/m3u      | 推流m3u接口      |
+| /hls/ipv4/txt | 推流ipv4 txt接口 |
+| /hls/ipv4/m3u | 推流ipv4 m3u接口 |
+| /hls/ipv6/txt | 推流ipv6 txt接口 |
+| /hls/ipv6/m3u | 推流ipv6 m3u接口 |

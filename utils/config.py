@@ -318,8 +318,8 @@ class ConfigManager:
         env = os.getenv("APP_HOST")
         if env:
             return env
-        cfg = self.config.get("Settings", "app_host", fallback="http://localhost")
-        if cfg and cfg != "http://localhost":
+        cfg = self.config.get("Settings", "app_host", fallback="127.0.0.1")
+        if cfg and cfg != "127.0.0.1":
             return cfg
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -329,10 +329,7 @@ class ConfigManager:
             finally:
                 s.close()
             if ip and not ip.startswith("127."):
-                scheme = "http"
-                if "://" in cfg:
-                    scheme = cfg.split("://", 1)[0]
-                return f"{scheme}://{ip}"
+                return ip
         except Exception:
             pass
         return cfg
@@ -340,6 +337,14 @@ class ConfigManager:
     @property
     def app_port(self):
         return os.getenv("APP_PORT") or self.config.getint("Settings", "app_port", fallback=8000)
+
+    @property
+    def nginx_http_port(self):
+        return self.config.getint("Settings", "nginx_http_port", fallback=8080)
+
+    @property
+    def nginx_rtmp_port(self):
+        return self.config.getint("Settings", "nginx_rtmp_port", fallback=1935)
 
     @property
     def open_supply(self):
@@ -420,6 +425,22 @@ class ConfigManager:
     @property
     def logo_type(self):
         return self.config.get("Settings", "logo_type", fallback="png")
+
+    @property
+    def rtmp_idle_timeout(self):
+        return self.config.getint("Settings", "rtmp_idle_timeout", fallback=60)
+
+    @property
+    def rtmp_max_streams(self):
+        return self.config.getint("Settings", "rtmp_max_streams", fallback=10)
+
+    @property
+    def public_scheme(self):
+        return self.config.get("Settings", "public_scheme", fallback="http") or "http"
+
+    @property
+    def public_domain(self):
+        return self.config.get("Settings", "public_domain", fallback="")
 
     def load(self):
         """

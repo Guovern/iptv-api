@@ -12,7 +12,7 @@ from utils.channel import (
 from utils.config import config
 from utils.driver.setup import setup_driver
 from utils.driver.tools import search_submit
-from utils.requests.tools import get_soup_requests, close_session
+from utils.requests.tools import get_soup_requests
 from utils.retry import (
     retry_func,
     find_clickable_element_with_retry,
@@ -44,6 +44,7 @@ async def get_channels_by_online_search(names, callback=None):
     def process_channel_by_online_search(name):
         info_list = []
         driver = None
+        page_soup = None
         try:
             if open_driver:
                 driver = setup_driver()
@@ -52,13 +53,13 @@ async def get_channels_by_online_search(names, callback=None):
                         lambda: driver.get(pageUrl), name=f"online search:{name}"
                     )
                 except Exception as e:
+                    print(e)
                     driver.close()
                     driver.quit()
                     driver = setup_driver()
                     driver.get(pageUrl)
                 search_submit(driver, name)
             else:
-                page_soup = None
                 request_url = f"{pageUrl}?s={name}"
                 try:
                     page_soup = retry_func(
@@ -66,7 +67,7 @@ async def get_channels_by_online_search(names, callback=None):
                         name=f"online search:{name}",
                     )
                 except Exception as e:
-                    page_soup = get_soup_requests(request_url)
+                    print(e)
                 if not page_soup:
                     print(f"{name}:Request fail.")
                     return
@@ -186,7 +187,5 @@ async def get_channels_by_online_search(names, callback=None):
             data = result.get("data", [])
             if name:
                 channels[name] = data
-    if not open_driver:
-        close_session()
     pbar.close()
     return channels

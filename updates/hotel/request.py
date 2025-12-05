@@ -17,7 +17,7 @@ from utils.channel import (
 from utils.config import config
 from utils.driver.setup import setup_driver
 from utils.driver.tools import search_submit
-from utils.requests.tools import get_soup_requests, close_session
+from utils.requests.tools import get_soup_requests
 from utils.retry import (
     retry_func,
     find_clickable_element_with_retry,
@@ -58,6 +58,8 @@ async def get_channels_by_hotel(callback=None):
             name = f"{region}"
             info_list = []
             driver = None
+            page_soup = None
+            code = None
             try:
                 if open_driver:
                     driver = setup_driver()
@@ -67,22 +69,21 @@ async def get_channels_by_hotel(callback=None):
                             name=f"Foodie hotel search:{name}",
                         )
                     except Exception as e:
+                        print(e)
                         driver.close()
                         driver.quit()
                         driver = setup_driver()
                         driver.get(page_url)
                     search_submit(driver, name)
                 else:
-                    page_soup = None
                     post_form = {"saerch": name}
-                    code = None
                     try:
                         page_soup = retry_func(
                             lambda: get_soup_requests(page_url, data=post_form),
                             name=f"Foodie hotel search:{name}",
                         )
                     except Exception as e:
-                        page_soup = get_soup_requests(page_url, data=post_form)
+                        print(e)
                     if not page_soup:
                         print(f"{name}:Request fail.")
                         return info_list
@@ -185,10 +186,8 @@ async def get_channels_by_hotel(callback=None):
             for item in result
         ]
         request_channels = await get_channels_by_subscribe_urls(
-            urls, hotel=True, retry=False, error_print=False
+            urls, hotel=True, retry=False, error_print=False, pbar_desc="Processing get hotel json"
         )
         channels = merge_objects(channels, request_channels)
-        if not open_driver:
-            close_session()
         pbar.close()
     return channels

@@ -28,6 +28,10 @@
 | open_headers           | 开启使用M3U内含的请求头验证信息，用于测速等操作，注意：只有个别播放器支持播放这类含验证信息的接口，默认为关闭                                                                                                              | False             |
 | app_host               | 页面服务Host地址，默认使用本机IP                                                                                                                                                   |                   |
 | app_port               | 页面服务端口，用于控制页面服务的端口号                                                                                                                                                   | 8000              |
+| nginx_http_port        | Nginx HTTP服务端口，用于RTMP推流转发的HTTP服务端口                                                                                                                                    | 8080              |
+| nginx_rtmp_port        | Nginx RTMP服务端口，用于RTMP推流转发的RTMP服务端口                                                                                                                                    | 1935              |
+| public_scheme          | 公网协议，可选值：http、https                                                                                                                                                   | http              |
+| public_domain          | 公网Host地址，用于生成结果中的访问地址，默认使用本机IP                                                                                                                                        |                   |
 | cdn_url                | CDN代理加速地址，用于订阅源、频道图标等资源的加速访问                                                                                                                                          |                   |
 | final_file             | 生成结果文件路径                                                                                                                                                              | output/result.txt |
 | hotel_num              | 结果中偏好的酒店源接口数量                                                                                                                                                         | 10                |
@@ -55,6 +59,8 @@
 | origin_type_prefer     | 结果偏好的接口来源，结果优先按该顺序进行排序，逗号分隔，例如：local,hotel,multicast,subscribe,online_search；local：本地源，hotel：酒店源，multicast：组播源，subscribe：订阅源，online_search：关键字搜索；不填写则表示不指定来源，按照接口速率排序 |                   |
 | recent_days            | 获取最近时间范围内更新的接口（单位天），适当减小可避免出现匹配问题                                                                                                                                     | 30                |
 | request_timeout        | 查询请求超时时长，单位秒(s)，用于控制查询接口文本链接的超时时长以及重试时长，调整此值能优化更新时间                                                                                                                   | 10                |
+| rtmp_idle_timeout      | RTMP频道接口空闲停止推流超时时长，单位秒(s)，用于控制接口无人观看时超过该时长后停止推流，调整此值能优化服务器资源占用                                                                                                        | 60                |
+| rtmp_max_streams       | RTMP推流最大并发数量，用于控制同时推流的频道数量，数值越大服务器压力越大，调整此值能优化服务器资源占用                                                                                                                 | 10                |
 | speed_test_limit       | 同时执行测速的接口数量，用于控制测速阶段的并发数量，数值越大测速所需时间越短，负载较高，结果可能不准确；数值越小测速所需时间越长，低负载，结果较准确；调整此值能优化更新时间                                                                                | 10                |
 | speed_test_timeout     | 单个接口测速超时时长，单位秒(s)；数值越大测速所需时间越长，能提高获取接口数量，但质量会有所下降；数值越小测速所需时间越短，能获取低延时的接口，质量较好；调整此值能优化更新时间                                                                             | 10                |
 | speed_test_filter_host | 测速阶段使用Host地址进行过滤，相同Host地址的频道将共用测速数据，开启后可大幅减少测速所需时间，但可能会导致测速结果不准确                                                                                                      | False             |
