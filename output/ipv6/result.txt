@@ -1,5 +1,5 @@
 🕘️更新时间,#genre#
-2025-12-30 06:43:49,http://php.jdshipin.com/TVOD/iptv.php?id=rthk33
+2025-12-30 18:52:34,http://php.jdshipin.com/TVOD/iptv.php?id=rthk33
 
 📺央视频道,#genre#
 CCTV-1,http://php.jdshipin.com/TVOD/iptv.php?id=rthk33
@@ -870,7 +870,6 @@ CETV-4,http://gslbmgsplive.miguvideo.com/migu/kailu/cetv4/50/20240709/index.m3u8
 龙泉新闻综合,http://l.cztvcloud.com/channels/lantian/SXlongquan1/720p.m3u8
 遂昌综合,http://l.cztvcloud.com/channels/lantian/SXsuichang1/720p.m3u8?zzhed
 遂昌新闻综合,http://l.cztvcloud.com/channels/lantian/SXsuichang1/720p.m3u8
-象山新闻综合,http://l.cztvcloud.com/channels/lantian/SXxiangshan1/720p.m3u8
 衢江新闻综合,http://l.cztvcloud.com/channels/lantian/SXqujiang1/720p.m3u8?zzhed
 衢江新闻综合,https://stream1.freetv.fun/qu-jiang-xin-wen-zong-he-2.m3u8
 衢江新闻综合,https://stream1.freetv.fun/qu-jiang-xin-wen-zong-he-3.m3u8
@@ -2525,6 +2524,8 @@ NewTV动作电影,https://iptv.catvod.com/live.php?id=NewTV%E5%8A%A8%E4%BD%9C%E7
 东森电影,https://stream1.freetv.fun/dong-sen-dian-ying-8.ctv
 东森电影,https://hls-gateway.vpstv.net/streams/476995.m3u8
 东森电影,http://bxtv.3a.ink/api.php?id=dsdy
+龙祥电影,https://smt.858.qzz.io/Smart.php?id=lungxiangtime_twn
+龙祥电影,https://smt.go-iptv.ggff.net/smart.php?id=lungxiangtime_twn&token=Goiptv
 东森洋片,https://stream1.freetv.fun/dong-sen-yang-pian-3.m3u8
 东森洋片,http://s1.an94tv.cfd/aktv2/CH-2/AKTV.m3u8
 东森洋片,https://hls-gateway.vpstv.net/streams/476997.m3u8
