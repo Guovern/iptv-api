@@ -10,7 +10,7 @@ from utils.config import (
     ConfigValidationError,
     _get_command_output,
 )
-from utils.tools import get_public_url
+from utils.tools import get_epg_url, get_public_url
 
 
 class ConfigValidationTests(unittest.TestCase):
@@ -186,6 +186,21 @@ nginx_http_port = 8080
             self.assertEqual(get_public_url(), "https://iptv.example.com/base")
             self.assertEqual(get_public_url(5180), "http://legacy.example:5180")
 
+    def test_release_asset_base_url_overrides_github_raw_epg_url(self):
+        with patch.dict(
+            os.environ,
+            {
+                "GITHUB_ACTIONS": "true",
+                "IPTV_API_ARTIFACT_BASE_URL": (
+                    "https://github.com/owner/repository/releases/download/playlist-latest/"
+                ),
+            },
+        ):
+            self.assertEqual(
+                get_epg_url(),
+                "https://github.com/owner/repository/releases/download/playlist-latest/epg.gz",
+            )
+
     def test_windows_network_command_does_not_open_a_console(self):
         completed = Mock(stdout="192.0.2.10\n")
         with patch("utils.config.sys.platform", "win32"), patch(
@@ -231,6 +246,33 @@ public_url = https://iptv.example.com
 
         self.assertEqual(manager.public_url, "https://iptv.example.com")
         self.assertIsNone(manager.environment_override_name("public_url"))
+
+    def test_empty_http_proxy_environment_keeps_configured_proxy(self):
+        manager, _, _ = self._manager(
+            """\
+[Settings]
+http_proxy = http://proxy.example.com:7890
+""",
+            environ={"HTTP_PROXY": ""},
+        )
+
+        self.assertEqual(manager.http_proxy, "http://proxy.example.com:7890")
+        self.assertIsNone(manager.environment_override_name("http_proxy"))
+
+    def test_nonempty_http_proxy_environment_overrides_configured_proxy(self):
+        manager, _, _ = self._manager(
+            """\
+[Settings]
+http_proxy = http://config-proxy.example.com:7890
+""",
+            environ={"HTTP_PROXY": "http://env-proxy.example.com:7890"},
+        )
+
+        self.assertEqual(manager.http_proxy, "http://env-proxy.example.com:7890")
+        self.assertEqual(
+            manager.environment_override_name("http_proxy"),
+            "HTTP_PROXY",
+        )
 
     def test_nonempty_public_url_environment_overrides_configured_address(self):
         manager, _, _ = self._manager(

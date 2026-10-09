@@ -1006,6 +1006,20 @@ async def test_speed(
                                 http_semaphore=http_semaphore,
                                 probe_semaphore=probe_semaphore,
                             )
+                    except asyncio.CancelledError:
+                        task = asyncio.current_task()
+                        if task is not None and task.cancelling():
+                            raise
+                        result = {
+                            "speed": 0,
+                            "delay": -1,
+                            "resolution": None,
+                            "fps": None,
+                            "video_codec": None,
+                            "audio_codec": None,
+                            "test_status": "request_error",
+                            "error_type": "CancelledError",
+                        }
                     except TimeoutError:
                         result = {
                             "speed": 0,

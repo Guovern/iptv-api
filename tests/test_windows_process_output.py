@@ -22,6 +22,18 @@ class WindowsProcessOutputTests(unittest.TestCase):
         with patch("utils.process.sys.platform", "darwin"):
             self.assertEqual(no_window_process_kwargs(), {})
 
+    def test_direct_network_environment_removes_proxy_variables(self):
+        from utils.process import direct_network_env
+
+        environment = direct_network_env({
+            "HTTP_PROXY": "http://proxy.example.com:7890",
+            "https_proxy": "http://proxy.example.com:7890",
+            "ALL_PROXY": "socks5://proxy.example.com:1080",
+            "PATH": "/usr/bin",
+        })
+
+        self.assertEqual(environment, {"PATH": "/usr/bin"})
+
     def test_service_output_is_reconfigured_from_gbk_to_utf8(self):
         with patch.dict(os.environ, {"IPTV_API_SKIP_VERSION_CHECK": "1"}):
             from service import app as service_app

@@ -325,6 +325,68 @@ class SourceEditorTests(unittest.TestCase):
                 with open(path, encoding="utf-8") as file:
                     self.assertEqual(file.read(), "")
 
+    def test_alias_rows_use_lightweight_summaries_and_edit_on_demand(self):
+        path = self._write(
+            "alias.txt",
+            "Channel 1,Alias 1,Alias 2,Alias 3,Alias 4\nChannel 1,Alias 5\n",
+        )
+        editor = self._editor("alias", path)
+
+        self.assertEqual(len(editor.rows), 1)
+        self.assertEqual(editor.rows[0]["aliases"], ["Alias 1", "Alias 2", "Alias 3", "Alias 4", "Alias 5"])
+        self.assertIsNone(editor.table.cellWidget(0, 2))
+        editor.table.setColumnWidth(2, 1200)
+        editor._refresh_alias_summaries()
+        self.assertEqual(editor.table.item(0, 2).text(), "Alias 1, Alias 2, Alias 3, Alias 4, Alias 5")
+        editor.table.setColumnWidth(2, 80)
+        editor._refresh_alias_summaries()
+        self.assertNotEqual(editor.table.item(0, 2).text(), "Alias 1, Alias 2, Alias 3, Alias 4, Alias 5")
+        self.assertFalse(editor.table.item(0, 2).flags() & Qt.ItemFlag.ItemIsEditable)
+
+        editor._edit_aliases_dialog = lambda aliases: ["Updated 1", "Updated 2"]
+        editor._edit_aliases(0, 2)
+
+        self.assertEqual(editor.rows[0]["aliases"], ["Updated 1", "Updated 2"])
+        editor.table.setColumnWidth(2, 1200)
+        editor._refresh_alias_summaries()
+        self.assertEqual(editor.table.item(0, 2).text(), "Updated 1, Updated 2")
+        self.assertIn("Channel 1,Updated 1,Updated 2", editor.raw_editor.toPlainText())
+
+    def test_alias_summary_refreshes_after_window_resize(self):
+        aliases = ",".join(f"Alias-{index:02d}" for index in range(1, 16))
+        path = self._write("alias.txt", f"Channel,{aliases}\n")
+        editor = self._editor("alias", path)
+        editor.resize(520, 500)
+        editor.show()
+        QTest.qWait(250)
+        small_width = editor.table.columnWidth(2)
+        small_summary = editor.table.item(0, 2).text()
+
+        editor.resize(1500, 500)
+        QTest.qWait(250)
+
+        self.assertGreater(editor.table.columnWidth(2), small_width)
+        self.assertNotEqual(editor.table.item(0, 2).text(), small_summary)
+
+    def test_whitelist_rules_use_a_shared_delegate_until_editing(self):
+        path = self._write("whitelist.txt", "Channel,Match\n")
+        editor = self._editor("whitelist", path)
+
+        item = editor.table.item(0, 3)
+        self.assertIsNone(editor.table.cellWidget(0, 3))
+        self.assertEqual(item.data(Qt.ItemDataRole.UserRole), "exact")
+        delegate = editor.table.itemDelegateForColumn(3)
+        self.assertEqual(delegate.__class__.__name__, "RuleComboDelegate")
+
+        index = editor.table.model().index(0, 3)
+        rule_editor = delegate.createEditor(editor.table, None, index)
+        delegate.setEditorData(rule_editor, index)
+        rule_editor.setCurrentIndex(1)
+        delegate.setModelData(rule_editor, editor.table.model(), index)
+
+        self.assertEqual(editor.rows[0]["rule_type"], "keyword")
+        self.assertIn("[KEYWORDS]", editor.raw_editor.toPlainText())
+
 
 if __name__ == "__main__":
     unittest.main()

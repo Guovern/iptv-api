@@ -1,12 +1,16 @@
 import json
+import logging
+from functools import wraps
 import os
 import sqlite3
-from threading import Lock
+from threading import Lock, RLock
 
 
 _schema_lock = Lock()
 _write_lock = Lock()
 _migrated_dbs = {}
+_journal_lock = RLock()
+_rollback_journal_dbs = {}
 
 _RESULT_DATA_SCHEMA = (
     "CREATE TABLE IF NOT EXISTS result_data ("
@@ -31,11 +35,57 @@ def _configure_connection(conn):
     return conn
 
 
-def get_db_connection(db_path):
+def get_db_connection(db_path, *, journal_mode=None):
     db_dir = os.path.dirname(db_path)
     if db_dir:
         os.makedirs(db_dir, exist_ok=True)
-    return _configure_connection(sqlite3.connect(db_path, timeout=30.0))
+    conn = sqlite3.connect(db_path, timeout=30.0)
+    try:
+        if journal_mode is not None:
+            if journal_mode not in ("WAL", "DELETE"):
+                raise ValueError("Unsupported SQLite journal mode")
+            conn.execute(f"PRAGMA journal_mode={journal_mode}")
+        return _configure_connection(conn)
+    except Exception:
+        conn.close()
+        raise
+
+
+def _database_signature(db_path):
+    try:
+        stat = os.stat(db_path)
+        return stat.st_dev, stat.st_ino
+    except OSError:
+        return None
+
+
+def with_journal_fallback(initialize):
+    """Retry schema initialization with rollback journaling when WAL I/O fails."""
+    @wraps(initialize)
+    def wrapped(db_path):
+        key = os.fspath(db_path)
+        with _journal_lock:
+            signature = _database_signature(db_path)
+            mode = (
+                "DELETE" if signature is not None
+                and _rollback_journal_dbs.get(key) == signature else "WAL"
+            )
+            try:
+                return initialize(db_path, journal_mode=mode)
+            except sqlite3.OperationalError as exc:
+                code = getattr(exc, "sqlite_errorcode", None)
+                wal_io_error = (
+                    code is not None and (code & 0xff) in (sqlite3.SQLITE_IOERR, sqlite3.SQLITE_CANTOPEN)
+                ) or (code is None and str(exc) in ("disk I/O error", "unable to open database file"))
+                if mode != "WAL" or not wal_io_error:
+                    raise
+                result = initialize(db_path, journal_mode="DELETE")
+                _rollback_journal_dbs[key] = _database_signature(db_path)
+                logging.getLogger(__name__).warning(
+                    "SQLite WAL initialization failed; using DELETE journal mode for %s", db_path
+                )
+                return result
+    return wrapped
 
 
 def return_db_connection(db_path, conn):
@@ -48,7 +98,8 @@ def return_db_connection(db_path, conn):
         conn.close()
 
 
-def ensure_result_data_schema(db_path):
+@with_journal_fallback
+def ensure_result_data_schema(db_path, *, journal_mode="WAL"):
     try:
         signature = (os.stat(db_path).st_dev, os.stat(db_path).st_ino)
     except OSError:
@@ -64,10 +115,9 @@ def ensure_result_data_schema(db_path):
         if signature is not None and _migrated_dbs.get(db_path) == signature:
             return
 
-        conn = get_db_connection(db_path)
+        conn = get_db_connection(db_path, journal_mode=journal_mode)
         try:
             cursor = conn.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("BEGIN IMMEDIATE")
             cursor.execute(_RESULT_DATA_SCHEMA)
             cursor.execute("PRAGMA table_info(result_data)")

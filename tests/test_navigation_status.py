@@ -4,20 +4,43 @@ from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QMessageBox, QStackedWidget, QWidget
+from PySide6.QtCore import QSettings
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox, QPushButton, QStackedWidget, QWidget
 from qfluentwidgets import FluentIcon, NavigationPushButton
 
 from desktop_ui.pages.about import AboutPage
 from desktop_ui.changelog_dialog import ChangelogDialog, extract_release_notes
-from desktop_ui.main_window import MainWindow
+from desktop_ui.main_window import MainWindow, _update_notification_icon
 from desktop_ui.widgets import NavigationStatusIndicator
 from utils.i18n import get_language, set_language
 
 
 class NavigationStatusIndicatorTests(unittest.TestCase):
+    UPDATE_SETTING_KEYS = (
+        AboutPage.AUTO_CHECK_SETTING,
+        AboutPage.READ_UPDATE_SETTING,
+        AboutPage.IGNORED_UPDATE_SETTING,
+    )
+
     @classmethod
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication([])
+
+    def setUp(self):
+        settings = QSettings()
+        self._update_setting_values = {
+            key: (settings.contains(key), settings.value(key))
+            for key in self.UPDATE_SETTING_KEYS
+        }
+
+    def tearDown(self):
+        settings = QSettings()
+        for key, (exists, value) in self._update_setting_values.items():
+            if exists:
+                settings.setValue(key, value)
+            else:
+                settings.remove(key)
+        settings.sync()
 
     def test_indicator_fits_expanded_and_compact_navigation_items(self):
         item = NavigationPushButton(FluentIcon.HOME, "Overview", True)
@@ -28,12 +51,18 @@ class NavigationStatusIndicatorTests(unittest.TestCase):
         item.setCompacted(False)
         self.assertFalse(indicator.isHidden())
         self.assertLess(indicator.geometry().right(), item.width())
-
         item.setCompacted(True)
         self.assertLess(indicator.geometry().right(), item.width())
 
+    def test_update_notification_icon_is_a_colored_upward_badge(self):
+        icon = _update_notification_icon()
+
+        self.assertEqual((icon.width(), icon.height()), (40, 40))
+        self.assertNotEqual(icon.toImage().pixelColor(20, 11), icon.toImage().pixelColor(20, 2))
+
     def test_about_page_emits_available_version_status(self):
         page = AboutPage()
+        self.addCleanup(page.deleteLater)
         statuses = []
         page.status_changed.connect(lambda state, payload: statuses.append((state, payload)))
 
@@ -46,7 +75,228 @@ class NavigationStatusIndicatorTests(unittest.TestCase):
             "asset_name": "",
         })
 
-        self.assertEqual(statuses[-1], ("available", {"version": "9.9.9"}))
+        self.assertEqual(statuses[-1], ("available", {"version": "9.9.9", "unread": False}))
+
+    def test_available_update_uses_dialog_copy_and_decorated_notice(self):
+        page = AboutPage()
+        self.addCleanup(page.deleteLater)
+
+        with patch("desktop_ui.pages.about.isDarkTheme", return_value=False):
+            page._checked({
+                "newer": True,
+                "latest": "9.9.9",
+                "current": "1.0.0",
+                "release_url": "https://example.com/release",
+                "asset_url": "https://example.com/update.zip",
+                "asset_name": "update.zip",
+            })
+
+        self.assertEqual(page.version_status.text(), "发现新版本：9.9.9")
+        self.assertFalse(page.update_icon.isHidden())
+        self.assertFalse(page.update_badge.isHidden())
+        self.assertEqual(page.update_badge.text(), "可下载")
+        self.assertFalse(page.download_button.isHidden())
+        image = page.update_icon.pixmap().toImage()
+        icon_colors = {
+            image.pixelColor(x, y).name()
+            for x in range(image.width())
+            for y in range(image.height())
+            if image.pixelColor(x, y).alpha()
+        }
+        self.assertIn("#047857", icon_colors)
+
+    def test_automatic_update_is_unread_once_and_can_be_ignored(self):
+        settings = QSettings()
+        for key in (
+            AboutPage.READ_UPDATE_SETTING,
+            AboutPage.IGNORED_UPDATE_SETTING,
+        ):
+            settings.remove(key)
+        page = AboutPage()
+        self.addCleanup(page.deleteLater)
+        statuses = []
+        notifications = []
+        page.status_changed.connect(lambda state, payload: statuses.append((state, payload)))
+        page.update_notification_requested.connect(notifications.append)
+
+        page._automatic_check = True
+        page._checked({
+            "newer": True,
+            "latest": "9.9.9",
+            "current": "1.0.0",
+            "release_url": "https://example.com/release",
+            "asset_url": "",
+            "asset_name": "",
+        })
+
+        self.assertEqual(statuses[-1], ("available", {"version": "9.9.9", "unread": True}))
+        self.assertEqual(notifications, [{"version": "9.9.9"}])
+
+        page.ignore_available_update()
+        self.assertEqual(statuses[-1], ("available", {"version": "9.9.9", "unread": False}))
+        self.assertEqual(settings.value(AboutPage.IGNORED_UPDATE_SETTING), "9.9.9")
+
+        notifications.clear()
+        page._automatic_check = True
+        page._checked({
+            "newer": True,
+            "latest": "9.9.9",
+            "current": "1.0.0",
+            "release_url": "https://example.com/release",
+            "asset_url": "",
+            "asset_name": "",
+        })
+        self.assertEqual(statuses[-1], ("available", {"version": "9.9.9", "unread": False}))
+        self.assertEqual(notifications, [])
+
+    def test_auto_check_switch_controls_the_check_timer(self):
+        settings = QSettings()
+        settings.remove(AboutPage.AUTO_CHECK_SETTING)
+        page = AboutPage()
+        self.addCleanup(page.deleteLater)
+
+        self.assertTrue(page.auto_check_timer.isActive())
+        page.auto_check_switch.setChecked(False)
+        self.assertFalse(page.auto_check_timer.isActive())
+        self.assertFalse(settings.value(AboutPage.AUTO_CHECK_SETTING, True, bool))
+
+        page.auto_check_switch.setChecked(True)
+        self.assertTrue(page.auto_check_timer.isActive())
+
+    def test_auto_check_is_queued_without_startup_delay(self):
+        QSettings().setValue(AboutPage.AUTO_CHECK_SETTING, True)
+        with patch("desktop_ui.pages.about.QTimer.singleShot") as single_shot:
+            page = AboutPage()
+        self.addCleanup(page.deleteLater)
+
+        self.assertEqual(single_shot.call_args.args[0], 0)
+
+    def test_available_update_navigation_status_is_green_and_dismissible(self):
+        host = self._status_host(name="about")
+        host.stackedWidget.setCurrentWidget(host.other_page)
+
+        MainWindow._update_about_navigation_status(
+            host, "available", {"version": "9.9.9", "unread": True}
+        )
+
+        status = host._navigation_statuses["about"]
+        self.assertEqual(status["color"], "#059669")
+        self.assertEqual(status["icon_color"], "#D1FAE5")
+        self.assertTrue(status["dismiss_on_visit"])
+
+        MainWindow._update_about_navigation_status(
+            host, "available", {"version": "9.9.9", "unread": False}
+        )
+        self.assertNotIn("about", host._navigation_statuses)
+
+    def test_visiting_about_marks_update_notification_as_read(self):
+        host = self._status_host(name="about")
+        host.stackedWidget.setCurrentWidget(host.other_page)
+        calls = []
+
+        class About:
+            def mark_update_read(self):
+                calls.append(True)
+
+        host.about = About()
+        MainWindow._update_about_navigation_status(
+            host, "available", {"version": "9.9.9", "unread": True}
+        )
+        host.stackedWidget.setCurrentWidget(host._navigation_items["about"][2])
+        MainWindow._navigation_page_changed(host, 0)
+
+        self.assertNotIn("about", host._navigation_statuses)
+        self.assertEqual(calls, [True])
+
+    def test_visiting_logs_marks_runtime_error_as_read(self):
+        host = self._status_host(name="logs")
+        host.stackedWidget.setCurrentWidget(host.other_page)
+
+        MainWindow._mark_logs_error(host)
+        host.stackedWidget.setCurrentWidget(host._navigation_items["logs"][2])
+        MainWindow._navigation_page_changed(host, 0)
+
+        self.assertNotIn("logs", host._navigation_statuses)
+
+    def test_sponsor_banner_is_only_visible_on_dashboard_until_dismissed(self):
+        dashboard = QWidget()
+        other_page = QWidget()
+        stack = QStackedWidget()
+        stack.addWidget(dashboard)
+        stack.addWidget(other_page)
+
+        class Host:
+            pass
+
+        host = Host()
+        host.dashboard = dashboard
+        host.stackedWidget = stack
+        host.sponsor_banner_host = QWidget()
+        host._sponsor_dismissed = False
+
+        MainWindow._update_sponsor_banner_visibility(host)
+        self.assertFalse(host.sponsor_banner_host.isHidden())
+
+        stack.setCurrentWidget(other_page)
+        MainWindow._update_sponsor_banner_visibility(host)
+        self.assertTrue(host.sponsor_banner_host.isHidden())
+
+        host._sponsor_dismissed = True
+        stack.setCurrentWidget(dashboard)
+        MainWindow._update_sponsor_banner_visibility(host)
+        self.assertTrue(host.sponsor_banner_host.isHidden())
+
+    def test_dismissing_update_dialog_keeps_update_unread(self):
+        class Stack:
+            def currentWidget(self):
+                return object()
+
+        class About:
+            asset_url = ""
+            release_url = "https://example.com/release"
+
+            def __init__(self):
+                self.marked_read = False
+                self.ignored = False
+
+            def mark_update_read(self):
+                self.marked_read = True
+
+            def ignore_available_update(self):
+                self.ignored = True
+
+        class Host(QWidget):
+            _show_update_notification = MainWindow._show_update_notification
+
+            def __init__(self):
+                super().__init__()
+                self.statuses = []
+
+            def _update_about_navigation_status(self, state, payload):
+                self.statuses.append((state, payload))
+
+        host = Host()
+        self.addCleanup(host.deleteLater)
+        host.stackedWidget = Stack()
+        host.about = About()
+        action_sizes = []
+
+        def dismiss(dialog):
+            dialog.show()
+            self.app.processEvents()
+            action_sizes.extend(
+                (button.text(), button.width(), button.height())
+                for button in dialog.findChildren(QPushButton)
+            )
+            return QDialog.DialogCode.Rejected
+
+        with patch.object(QDialog, "exec", dismiss):
+            host._show_update_notification({"version": "9.9.9"})
+
+        self.assertFalse(host.about.marked_read)
+        self.assertFalse(host.about.ignored)
+        self.assertEqual(host.statuses, [("available", {"version": "9.9.9", "unread": True})])
+        self.assertEqual(action_sizes, [("忽略此版本", 112, 24), ("立即升级", 112, 24)])
 
     def test_about_page_displays_hotfix_revision(self):
         page = AboutPage()
@@ -66,7 +316,7 @@ class NavigationStatusIndicatorTests(unittest.TestCase):
 
         self.assertEqual(
             statuses[-1],
-            ("available", {"version": "3.0.0 (r20260810123045)"}),
+            ("available", {"version": "3.0.0 (r20260810123045)", "unread": False}),
         )
         self.assertIn("r20260810123045", page.version_status.text())
         page.retranslate()
@@ -178,7 +428,7 @@ English content
         self.assertTrue(host._navigation_indicators["dashboard"].isHidden())
 
     @staticmethod
-    def _status_host():
+    def _status_host(name="dashboard"):
         dashboard_page = QWidget()
         other_page = QWidget()
         stack = QStackedWidget()
@@ -198,8 +448,8 @@ English content
         host.stackedWidget = stack
         host.other_page = other_page
         host._navigation_items = {
-            "dashboard": (item, "desktop.dashboard", dashboard_page),
+            name: (item, "desktop.dashboard", dashboard_page),
         }
         host._navigation_statuses = {}
-        host._navigation_indicators = {"dashboard": indicator}
+        host._navigation_indicators = {name: indicator}
         return host

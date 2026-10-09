@@ -158,13 +158,14 @@ class MappingTableModel(QAbstractTableModel):
     def set_rows(self, rows: list[dict]):
         rows = list(rows)
         if rows == self.rows:
-            return
+            return False
         self.beginResetModel()
         self.rows = rows
         if self._sort_column is not None:
             key = self.columns[self._sort_column][0]
             self.rows = _sort_rows(self.rows, key, self._sort_order)
         self.endResetModel()
+        return True
 
     def set_columns(self, columns: list[tuple[str, str, Callable | None]]):
         if columns == self.columns:
@@ -391,7 +392,23 @@ class ChannelTableModel(MappingTableModel):
     def __init__(self, columns, parent=None, checkable_key: str | None = None, logo_loader: ChannelLogoLoader | None = None):
         super().__init__(columns, parent, checkable_key)
         self._logo_loader = logo_loader or ChannelLogoLoader(self)
+        self._logo_rows = {}
         self._logo_loader.icon_ready.connect(self._logo_loaded)
+
+    def set_rows(self, rows: list[dict]):
+        if super().set_rows(rows):
+            self._index_logo_rows()
+
+    def sort(self, column, order=Qt.SortOrder.AscendingOrder):
+        super().sort(column, order)
+        self._index_logo_rows()
+
+    def _index_logo_rows(self):
+        self._logo_rows = {}
+        for row_index, row in enumerate(self.rows):
+            logo = row.get("logo")
+            if logo:
+                self._logo_rows.setdefault(str(logo), []).append(row_index)
 
     @property
     def logo_loader(self):
@@ -417,11 +434,10 @@ class ChannelTableModel(MappingTableModel):
         return super().data(index, role)
 
     def _logo_loaded(self, logo: str):
-        for row_index, row in enumerate(self.rows):
-            if row.get("logo") == logo:
-                column = next((i for i, item in enumerate(self.columns) if item[0] == "name"), 0)
-                index = self.index(row_index, column)
-                self.dataChanged.emit(index, index, [Qt.ItemDataRole.DecorationRole])
+        column = next((i for i, item in enumerate(self.columns) if item[0] == "name"), 0)
+        for row_index in self._logo_rows.get(logo, ()):
+            index = self.index(row_index, column)
+            self.dataChanged.emit(index, index, [Qt.ItemDataRole.DecorationRole])
 
 
 class ConfigTableModel(QAbstractTableModel):

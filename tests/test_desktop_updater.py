@@ -12,7 +12,14 @@ from desktop_ui.update_manager import (
     _manifest_from_bytes,
     _sha256_from_digest,
 )
-from desktop_ui.updater import UpdateError, _safe_extract, extracted_application_root, install_update, sha256_file
+from desktop_ui.updater import (
+    UpdateError,
+    _preserve_runtime_data,
+    _safe_extract,
+    extracted_application_root,
+    install_update,
+    sha256_file,
+)
 
 
 class DesktopUpdaterTests(unittest.TestCase):
@@ -150,6 +157,27 @@ class DesktopUpdaterTests(unittest.TestCase):
             root = extracted_application_root(staging, "win32")
             program = root / "IPTV-API-GUI-v2.0.0.exe"
             self.assertEqual(sha256_file(program), hashlib.sha256(b"program").hexdigest())
+
+    def test_runtime_data_is_preserved_without_replacing_new_default_config(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            previous = directory / "previous"
+            replacement = directory / "replacement"
+            (previous / "config" / "logo").mkdir(parents=True)
+            (previous / "output" / "data").mkdir(parents=True)
+            (replacement / "config").mkdir(parents=True)
+            (previous / "config" / "config.ini").write_text("old default", encoding="utf-8")
+            (replacement / "config" / "config.ini").write_text("new default", encoding="utf-8")
+            (previous / "config" / "user_config.ini").write_text("user setting", encoding="utf-8")
+            (previous / "config" / "logo" / "CCTV.png").write_text("logo", encoding="utf-8")
+            (previous / "output" / "data" / "history.db").write_text("history", encoding="utf-8")
+
+            _preserve_runtime_data(previous, replacement)
+
+            self.assertEqual((replacement / "config" / "config.ini").read_text(encoding="utf-8"), "new default")
+            self.assertEqual((replacement / "config" / "user_config.ini").read_text(encoding="utf-8"), "user setting")
+            self.assertEqual((replacement / "config" / "logo" / "CCTV.png").read_text(encoding="utf-8"), "logo")
+            self.assertEqual((replacement / "output" / "data" / "history.db").read_text(encoding="utf-8"), "history")
 
     def test_install_replaces_the_bundle_only_after_the_helper_starts_it(self):
         with tempfile.TemporaryDirectory() as temporary:

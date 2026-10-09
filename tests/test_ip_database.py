@@ -3,6 +3,7 @@ import hashlib
 import os
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from utils.ip_checker.ip_checker import (
@@ -14,6 +15,18 @@ from utils.ip_checker.ip_checker import (
 
 
 class PrepareDatabaseTests(unittest.TestCase):
+    def test_uses_source_database_after_working_directory_changes(self):
+        expected_path = Path(__file__).resolve().parents[1] / DATABASE_PATH
+        with tempfile.TemporaryDirectory() as directory:
+            previous_directory = os.getcwd()
+            os.chdir(directory)
+            try:
+                database_path = prepare_database()
+            finally:
+                os.chdir(previous_directory)
+
+        self.assertEqual(Path(database_path), expected_path)
+
     def test_uses_uncompressed_database_when_available(self):
         with tempfile.TemporaryDirectory() as directory:
             database_path = os.path.join(directory, "qqwry.ipdb")
@@ -21,8 +34,8 @@ class PrepareDatabaseTests(unittest.TestCase):
                 file.write(b"database")
 
             with patch(
-                "utils.ip_checker.ip_checker.resource_path",
-                side_effect=lambda path, persistent=False: (
+                "utils.ip_checker.ip_checker.bundled_resource_path",
+                side_effect=lambda path: (
                     os.path.join(directory, "missing.gz")
                     if path == COMPRESSED_DATABASE_PATH
                     else database_path
@@ -51,6 +64,9 @@ class PrepareDatabaseTests(unittest.TestCase):
                 return packaged_database
 
             with patch(
+                "utils.ip_checker.ip_checker.bundled_resource_path",
+                side_effect=lambda path: compressed_path if path == COMPRESSED_DATABASE_PATH else packaged_database,
+            ), patch(
                 "utils.ip_checker.ip_checker.resource_path",
                 side_effect=resolve,
             ):
@@ -91,6 +107,9 @@ class PrepareDatabaseTests(unittest.TestCase):
                 return os.path.join(directory, "missing.ipdb")
 
             with patch(
+                "utils.ip_checker.ip_checker.bundled_resource_path",
+                side_effect=lambda path: compressed_path if path == COMPRESSED_DATABASE_PATH else os.path.join(directory, "missing.ipdb"),
+            ), patch(
                 "utils.ip_checker.ip_checker.resource_path",
                 side_effect=resolve,
             ):

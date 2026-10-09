@@ -11,10 +11,10 @@ from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QDialog, QPushButton
 
-from desktop_ui.controller import OperationWorker
+from desktop_ui.controller import OperationWorker, UpdateWorker
 from desktop_ui.pages.channels import ChannelCenterPage
 import utils.constants as constants
-from utils.channel_repository import delete_channel_results, ensure_channel_repository, list_categories, list_channel_results, list_channels
+from utils.channel_repository import delete_channel_records, delete_channel_results, ensure_channel_repository, list_categories, list_channel_results, list_channels, list_result_urls_by_channel
 from utils.i18n import t
 
 
@@ -126,6 +126,63 @@ class ChannelRepositoryFilterTests(unittest.TestCase):
         )
         connection.close()
 
+    def test_bulk_channel_delete_is_chunked_and_cleans_runtime_records(self):
+        channel_count = 1_001
+        connection = sqlite3.connect(self.db_path)
+        connection.executemany(
+            """
+            INSERT INTO channels(
+                channel_key, category, name, health, total_results,
+                valid_results, selected_results, updated_at
+            ) VALUES (?, 'Uncategorized', ?, 'unknown', 1, 0, 0, 1)
+            """,
+            ((f"bulk-{index}", f"Bulk {index}") for index in range(channel_count)),
+        )
+        connection.executemany(
+            """
+            INSERT INTO channel_results(
+                channel_key, result_key, url, valid, last_seen_at, extra_data
+            ) VALUES (?, ?, ?, 0, 1, '{}')
+            """,
+            (
+                (f"bulk-{index}", f"bulk-result-{index}", f"https://example.invalid/{index}")
+                for index in range(channel_count)
+            ),
+        )
+        connection.executemany(
+            """
+            INSERT INTO stream_screenshots(result_key, filename, status, attempted_at)
+            VALUES (?, ?, 'success', 1)
+            """,
+            (
+                (f"bulk-result-{index}", f"bulk-{index}.png")
+                for index in range(channel_count)
+            ),
+        )
+        connection.commit()
+        connection.close()
+
+        deleted = delete_channel_records(
+            self.db_path,
+            [f"bulk-{index}" for index in range(channel_count)],
+        )
+
+        self.assertEqual(deleted, channel_count)
+        connection = sqlite3.connect(self.db_path)
+        self.assertEqual(
+            connection.execute(
+                "SELECT COUNT(*) FROM channels WHERE category='Uncategorized'"
+            ).fetchone()[0],
+            0,
+        )
+        self.assertEqual(
+            connection.execute(
+                "SELECT COUNT(*) FROM stream_screenshots WHERE result_key LIKE 'bulk-result-%'"
+            ).fetchone()[0],
+            0,
+        )
+        connection.close()
+
 
 class OperationProgressTests(unittest.TestCase):
     def test_operation_worker_initializes_and_clamps_progress(self):
@@ -134,9 +191,25 @@ class OperationProgressTests(unittest.TestCase):
         worker.progress.connect(lambda _name, value: progress.append(value))
 
         worker._progress(5, 10, "Channel")
+        worker._progress(5, 10, "Channel")
         worker._progress(2, 10, "Channel")
 
         self.assertEqual(progress, [50])
+
+    def test_update_worker_throttles_completed_channel_events(self):
+        worker = UpdateWorker()
+        progress = []
+        worker.progress.connect(lambda *values: progress.append(values))
+
+        with patch(
+            "desktop_ui.controller.time.monotonic",
+            side_effect=[1.0, 1.01, 1.2],
+        ):
+            worker._progress("One", 10, url={"status": "completed"})
+            worker._progress("Two", 11, url={"status": "completed"})
+            worker._progress("Three", 12, url={"status": "completed"})
+
+        self.assertEqual([values[0] for values in progress], ["One", "Three"])
 
 
 class ChannelCenterViewTests(unittest.TestCase):
@@ -276,6 +349,77 @@ class ChannelCenterViewTests(unittest.TestCase):
             page._set_view_mode("list")
             self.assertTrue(page.category_sidebar.isHidden())
             self.assertFalse(page.channel_table.isColumnHidden(5))
+
+    def test_category_click_only_loads_result_urls_for_visible_channels(self):
+        with (
+            patch.object(constants, "channel_results_path", self.db_path),
+            patch.object(constants, "whitelist_path", self.whitelist_path),
+            patch.object(constants, "blacklist_path", self.blacklist_path),
+            patch("desktop_ui.pages.channels.resource_path", return_value=self.template_path),
+        ):
+            page = ChannelCenterPage()
+            self.addCleanup(page.deleteLater)
+
+            with patch(
+                "desktop_ui.pages.channels.list_result_urls_by_channel",
+                wraps=list_result_urls_by_channel,
+            ) as list_urls:
+                page._category_item_clicked(
+                    page._category_items[("category", "News")],
+                    0,
+                )
+
+            list_urls.assert_called_once_with(self.db_path, ["news-world"])
+
+    def test_category_directory_does_not_reload_channels_without_streams(self):
+        with (
+            patch.object(constants, "channel_results_path", self.db_path),
+            patch.object(constants, "whitelist_path", self.whitelist_path),
+            patch.object(constants, "blacklist_path", self.blacklist_path),
+            patch("desktop_ui.pages.channels.resource_path", return_value=self.template_path),
+        ):
+            page = ChannelCenterPage()
+            self.addCleanup(page.deleteLater)
+
+            with patch("desktop_ui.pages.channels.list_channels") as list_all:
+                page._populate_category_directory()
+
+            list_all.assert_not_called()
+
+    def test_selecting_unplayable_channels_does_not_query_every_result_set(self):
+        with (
+            patch.object(constants, "channel_results_path", self.db_path),
+            patch.object(constants, "whitelist_path", self.whitelist_path),
+            patch.object(constants, "blacklist_path", self.blacklist_path),
+            patch("desktop_ui.pages.channels.resource_path", return_value=self.template_path),
+        ):
+            page = ChannelCenterPage()
+            self.addCleanup(page.deleteLater)
+
+            with patch("desktop_ui.pages.channels.list_channel_results") as load_results:
+                page._toggle_all_channels(True)
+
+            load_results.assert_not_called()
+
+    def test_channel_click_loads_result_drawer_once(self):
+        with (
+            patch.object(constants, "channel_results_path", self.db_path),
+            patch.object(constants, "whitelist_path", self.whitelist_path),
+            patch.object(constants, "blacklist_path", self.blacklist_path),
+            patch("desktop_ui.pages.channels.resource_path", return_value=self.template_path),
+            patch("desktop_ui.pages.channels.is_channel_logo_click", return_value=False),
+        ):
+            page = ChannelCenterPage()
+            self.addCleanup(page.deleteLater)
+            index = page.channel_model.index(0, 1)
+
+            with patch.object(page, "_load_results") as load_results:
+                page._current_channel_changed(index, page.channel_model.index(-1, -1))
+                page._channel_clicked(index)
+
+            load_results.assert_called_once_with(
+                page.channel_model.rows[0]["channel_key"]
+            )
 
     def test_smart_collections_include_healthy_channels(self):
         connection = sqlite3.connect(self.db_path)

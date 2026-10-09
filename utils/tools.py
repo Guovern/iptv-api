@@ -24,14 +24,14 @@ from flask import send_file, make_response
 from opencc import OpenCC
 
 import utils.constants as constants
-from utils.config import config, resource_path
+from utils.config import config
 from utils.i18n import t
 from utils.identity import stable_result_id
 from utils.types import ChannelData
 from utils.run_state import read_run_state
+from utils.resources import resource_path
 
 opencc_t2s = OpenCC("t2s")
-_channel_alias_instance = None
 
 
 def get_logger(path, level=logging.ERROR, init=False):
@@ -422,6 +422,9 @@ def get_epg_url():
     """
     Get the epg result url
     """
+    artifact_base_url = os.getenv("IPTV_API_ARTIFACT_BASE_URL", "").strip()
+    if artifact_base_url:
+        return f"{artifact_base_url.rstrip('/')}/epg.gz"
     if os.getenv("GITHUB_ACTIONS"):
         repository = os.getenv("GITHUB_REPOSITORY", "Guovin/iptv-api")
         ref = os.getenv("GITHUB_REF", "gd")
@@ -448,13 +451,9 @@ def get_channel_epg_id(name: str | None) -> str:
     if not name:
         return ""
 
-    global _channel_alias_instance
-    if _channel_alias_instance is None:
-        from utils.alias import Alias
+    from utils.channel import channel_alias
 
-        _channel_alias_instance = Alias()
-
-    return _channel_alias_instance.get_primary(name)
+    return channel_alias.get_primary(name)
 
 
 def convert_to_m3u(path=None, first_channel_name=None, data=None, content=None):
@@ -643,22 +642,6 @@ def remove_cache_info(string):
     Remove the cache info from the string
     """
     return re.sub(r"[.*]?\$?-?cache:.*", "", string)
-
-
-def resource_path(relative_path, persistent=False):
-    """
-    Get the resource path
-    """
-    base_path = os.path.abspath(".")
-    total_path = os.path.join(base_path, relative_path)
-    if persistent or os.path.exists(total_path):
-        return total_path
-    else:
-        try:
-            base_path = sys._MEIPASS
-            return os.path.join(base_path, relative_path)
-        except Exception:
-            return total_path
 
 
 def write_content_into_txt(content, path=None, position=None, callback=None):

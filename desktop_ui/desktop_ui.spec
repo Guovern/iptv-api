@@ -49,6 +49,7 @@ datas.extend([
     ("../locales", "locales"),
     (compress_ip_database(), "utils/ip_checker/data"),
     ("../favicon.ico", "."),
+    ("../docs/images/helodata.png", "docs/images"),
     ("../CHANGELOG.md", "."),
     ("../version.json", "."),
     ("../service/nginx.conf.template", "service"),

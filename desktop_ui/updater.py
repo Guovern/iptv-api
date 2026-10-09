@@ -114,6 +114,23 @@ def _restore(target: Path, backup: Path) -> None:
         os.replace(backup, target)
 
 
+def _preserve_runtime_data(previous: Path, replacement: Path) -> None:
+    for directory_name in ("config", "output"):
+        source_root = previous / directory_name
+        target_root = replacement / directory_name
+        if not source_root.is_dir() or source_root.is_symlink():
+            continue
+        for source in source_root.rglob("*"):
+            if source.is_symlink() or not source.is_file():
+                continue
+            relative_path = source.relative_to(source_root)
+            if directory_name == "config" and relative_path == Path("config.ini"):
+                continue
+            destination = target_root / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+
+
 def install_update(pid: int, archive: Path, target: Path, expected_sha256: str) -> None:
     expected_sha256 = expected_sha256.lower()
     if len(expected_sha256) != 64 or any(char not in "0123456789abcdef" for char in expected_sha256):
@@ -131,6 +148,7 @@ def install_update(pid: int, archive: Path, target: Path, expected_sha256: str) 
         _safe_extract(archive, work_dir)
         payload = extracted_application_root(work_dir)
         application_entry(payload)
+        _preserve_runtime_data(target, payload)
         marker.unlink(missing_ok=True)
         _replace(target, payload, backup)
         entry = application_entry(target)

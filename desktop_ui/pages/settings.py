@@ -1,13 +1,94 @@
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
-from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, TableView
+import os
+import sys
+
+from PySide6.QtCore import QSettings, QStandardPaths, Qt, QTimer, Signal
+from PySide6.QtWidgets import QAbstractItemView, QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
+from qfluentwidgets import CaptionLabel, FluentIcon, InfoBar, InfoBarPosition, PushButton, TableView, isDarkTheme
 
 from desktop_ui.delegates import ConfigValueDelegate, ElidedDescriptionDelegate
 from desktop_ui.models import ConfigTableModel
 from desktop_ui.playback import PlaybackPreferencesDialog
+from desktop_ui.runtime import DATA_DIRECTORY_SETTING, RuntimeDirectoryError, default_runtime_directory, validate_runtime_directory
 from desktop_ui.widgets import AccentPushButton, AppSearchLineEdit, apply_dialog_theme, configure_table_columns, localize_dialog_buttons
 from utils.config import ConfigValidationError
 from utils.i18n import t
+
+
+class DataDirectoryDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        apply_dialog_theme(self)
+        self.setWindowTitle(t("desktop.data_directory"))
+        self.setMinimumWidth(560)
+        self.action = None
+        layout = QVBoxLayout(self)
+        current_label = QLabel(t("desktop.data_directory_current"), self)
+        self.current_path = QLabel(os.getcwd(), self)
+        self.current_path.setWordWrap(True)
+        self.current_path.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.next_path = CaptionLabel("", self)
+        self.next_path.setWordWrap(True)
+        self.next_path.setStyleSheet(f"color: {'#94A3B8' if isDarkTheme() else '#64748B'};")
+        self.next_path.hide()
+        self.select_button = PushButton(FluentIcon.FOLDER, t("desktop.select_data_directory"), self)
+        self.reset_button = PushButton(FluentIcon.SYNC, t("desktop.reset_data_directory"), self)
+        self.close_button = PushButton(t("desktop.close"), self)
+        actions = QHBoxLayout()
+        actions.addWidget(self.select_button)
+        actions.addWidget(self.reset_button)
+        actions.addStretch(1)
+        actions.addWidget(self.close_button)
+        layout.addWidget(current_label)
+        layout.addWidget(self.current_path)
+        layout.addWidget(self.next_path)
+        layout.addLayout(actions)
+        self.select_button.clicked.connect(self._select_data_directory)
+        self.reset_button.clicked.connect(self._reset_data_directory)
+        self.close_button.clicked.connect(self.reject)
+
+    def _select_data_directory(self):
+        settings = QSettings()
+        configured = str(settings.value(DATA_DIRECTORY_SETTING, "") or "").strip()
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            t("desktop.select_data_directory"),
+            configured or os.getcwd(),
+        )
+        if not directory:
+            return
+        try:
+            directory = validate_runtime_directory(directory)
+        except RuntimeDirectoryError as exc:
+            InfoBar.error(
+                t("name.error"),
+                str(exc),
+                parent=self,
+                position=InfoBarPosition.TOP,
+                duration=10000,
+            )
+            return
+        settings.setValue(DATA_DIRECTORY_SETTING, str(directory))
+        settings.sync()
+        self.action = "selected"
+        self._show_next_path(directory)
+
+    def _reset_data_directory(self):
+        settings = QSettings()
+        settings.remove(DATA_DIRECTORY_SETTING)
+        settings.sync()
+        self.action = "reset"
+        fallback_directory = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.AppDataLocation
+        )
+        directory = default_runtime_directory(
+            fallback_directory=fallback_directory,
+            prefer_executable_directory=sys.platform == "win32",
+        )
+        self._show_next_path(directory)
+
+    def _show_next_path(self, directory):
+        self.next_path.setText(f"{t('desktop.data_directory_next')}\n{directory}")
+        self.next_path.show()
 
 
 class SettingsPage(QWidget):
@@ -22,6 +103,7 @@ class SettingsPage(QWidget):
         self.save_button = AccentPushButton(FluentIcon.SAVE, t("desktop.save_settings"), self)
         self.reload_button = PushButton(FluentIcon.SYNC, t("desktop.reload"), self)
         self.playback_button = PushButton(FluentIcon.PLAY, t("desktop.playback_preferences"), self)
+        self.data_directory_button = PushButton(FluentIcon.FOLDER, t("desktop.data_directory"), self)
         self.table = TableView(self)
         self.table.setModel(self.model)
         self.table.setItemDelegateForColumn(1, ConfigValueDelegate(self.table))
@@ -42,6 +124,7 @@ class SettingsPage(QWidget):
         actions.addWidget(self.search, 1)
         actions.addWidget(self.reload_button)
         actions.addWidget(self.playback_button)
+        actions.addWidget(self.data_directory_button)
         actions.addWidget(self.save_button)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 16)
@@ -51,6 +134,7 @@ class SettingsPage(QWidget):
         self.search.textChanged.connect(self.model.filter)
         self.reload_button.clicked.connect(self._reload_settings)
         self.playback_button.clicked.connect(self._open_playback_preferences)
+        self.data_directory_button.clicked.connect(self._open_data_directory_dialog)
         self.save_button.clicked.connect(self.save)
         self.model.modelReset.connect(lambda: QTimer.singleShot(0, self._open_editors))
         QTimer.singleShot(0, self._open_editors)
@@ -60,6 +144,7 @@ class SettingsPage(QWidget):
         self.save_button.setText(t("desktop.save_settings"))
         self.reload_button.setText(t("desktop.reload"))
         self.playback_button.setText(t("desktop.playback_preferences"))
+        self.data_directory_button.setText(t("desktop.data_directory"))
         self.model.reload()
 
     def _open_editors(self):
@@ -77,6 +162,10 @@ class SettingsPage(QWidget):
 
     def _open_playback_preferences(self):
         PlaybackPreferencesDialog(self).exec()
+
+    def _open_data_directory_dialog(self):
+        dialog = DataDirectoryDialog(self)
+        dialog.exec()
 
     def _clear_editor_selection(self):
         for editor in self.table.findChildren(QLineEdit):

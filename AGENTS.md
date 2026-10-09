@@ -17,6 +17,12 @@
   definitions, key classes or public interfaces, or genuinely complex logic
   that would otherwise be difficult to understand.
 
+## Git commit references
+
+- When implementing a GitHub Discussion suggestion, append its reference to
+  the commit subject in the format ` (#<discussion-number>)`, for example:
+  `feat: add portable data directories (#1403)`.
+
 ## GUI screenshot updates
 
 - Regenerate the checked-in Chinese and English GUI screenshots only when a

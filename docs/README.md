@@ -19,7 +19,7 @@
 
 | 方式 | 适用场景 | 入口 |
 |:---|:---|:---|
-| GitHub Actions | 无需自备服务器，适合手动生成结果 | [工作流部署](./tutorial.md#工作流部署) |
+| GitHub Actions | 无需自备服务器，适合手动生成并通过 Pages 订阅，Release 用于下载保存结果 | [工作流部署](./tutorial.md#工作流部署) |
 | GUI | Windows 或 macOS 桌面使用 | [GUI 软件](./tutorial.md#gui-软件) |
 | 命令行 | 本地开发、调试或脚本运行 | [命令行](./tutorial.md#命令行) |
 | Docker | 服务器、NAS 或长期运行 | [Docker](./tutorial.md#docker) |
@@ -40,7 +40,7 @@
 
 | Method | Best for | Start here |
 |:---|:---|:---|
-| GitHub Actions | Manual result generation without a dedicated server | [Workflow deployment](./tutorial_en.md#workflow-deployment) |
+| GitHub Actions | Manual generation with Pages subscriptions and Release downloads for saving results | [Workflow deployment](./tutorial_en.md#workflow-deployment) |
 | GUI | Desktop use on Windows or macOS | [GUI Software](./tutorial_en.md#gui-software) |
 | Command line | Local development, debugging, or scripts | [Command Line](./tutorial_en.md#command-line) |
 | Docker | Servers, NAS devices, or long-running deployments | [Docker](./tutorial_en.md#docker) |

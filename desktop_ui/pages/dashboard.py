@@ -164,11 +164,17 @@ class DashboardPage(QWidget):
         self._paused = False
         self._service_status = "unknown"
         self._runtime_rows = []
+        self._runtime_row_indexes = {}
+        self._runtime_valid_total = 0
         self._stream_snapshot = {"streams": []}
         self._stream_states = {}
         self._active_channel = None
         self.last_update_outcome = None
         self.run_state = read_run_state()
+        self._runtime_refresh_timer = QTimer(self)
+        self._runtime_refresh_timer.setSingleShot(True)
+        self._runtime_refresh_timer.setInterval(50)
+        self._runtime_refresh_timer.timeout.connect(self._apply_runtime_rows)
         self.status_card = MetricCard(t("desktop.run_status"), t("desktop.idle"), icon=FluentIcon.POWER_BUTTON, accent="#64748B")
         self.channel_card = MetricCard(
             t("desktop.channels"), "0", icon=FluentIcon.LIBRARY, accent="#7C3AED", animate_value_updates=True,
@@ -335,11 +341,22 @@ class DashboardPage(QWidget):
             count=sum(int(row.get("selected_results") or 0) for row in all_channels)
         ))
         if not self._running:
-            self._runtime_rows = [
+            self._replace_runtime_rows([
                 apply_channel_stream_state({**row, "display_status": "completed"}, self._stream_states)
                 for row in all_channels
-            ]
+            ])
         self._apply_runtime_rows()
+
+    def _replace_runtime_rows(self, rows):
+        self._runtime_rows = list(rows)
+        self._runtime_row_indexes = {
+            (row.get("category"), row.get("name")): index
+            for index, row in enumerate(self._runtime_rows)
+        }
+        self._runtime_valid_total = sum(
+            int(row.get("valid_results") or 0)
+            for row in self._runtime_rows
+        )
 
     def _apply_runtime_rows(self):
         self.run_state = read_run_state()
@@ -475,6 +492,7 @@ class DashboardPage(QWidget):
         elif not self._paused and (not self._active_channel or not self._running):
             self.progress_title.setText(title)
         if finished:
+            self._runtime_refresh_timer.stop()
             self.last_update_outcome = metadata if isinstance(metadata, dict) else None
             empty = self.last_update_outcome and self.last_update_outcome.get("status") == "empty"
             self.progress_title.setText(t("desktop.update_empty_gui" if empty else "desktop.update_completed_gui"))
@@ -497,19 +515,24 @@ class DashboardPage(QWidget):
             "updated_at": metadata.get("updated_at"),
             "logo": _channel_logo(metadata.get("channel"), metadata.get("logo")),
         }
-        existing = next(
-            (index for index, row in enumerate(self._runtime_rows)
-             if (row.get("category"), row.get("name")) == key),
-            -1,
-        )
-        if existing < 0:
+        if len(self._runtime_row_indexes) != len(self._runtime_rows):
+            self._replace_runtime_rows(self._runtime_rows)
+        existing = self._runtime_row_indexes.get(key)
+        if existing is None:
+            self._runtime_row_indexes[key] = len(self._runtime_rows)
             self._runtime_rows.append(apply_channel_stream_state(runtime_row, self._stream_states))
+            self._runtime_valid_total += int(runtime_row.get("valid_results") or 0)
         else:
+            self._runtime_valid_total -= int(
+                self._runtime_rows[existing].get("valid_results") or 0
+            )
             runtime_row["channel_key"] = self._runtime_rows[existing].get("channel_key")
             self._runtime_rows[existing] = apply_channel_stream_state(runtime_row, self._stream_states)
+            self._runtime_valid_total += int(runtime_row.get("valid_results") or 0)
         self.channel_card.set_value(len(self._runtime_rows))
-        self.valid_card.set_value(sum(int(row.get("valid_results") or 0) for row in self._runtime_rows))
-        self._apply_runtime_rows()
+        self.valid_card.set_value(self._runtime_valid_total)
+        if not self._runtime_refresh_timer.isActive():
+            self._runtime_refresh_timer.start()
 
     def set_service_status(self, status: str):
         self._service_status = status
@@ -524,10 +547,10 @@ class DashboardPage(QWidget):
     def set_stream_snapshot(self, snapshot: dict):
         self._stream_snapshot = snapshot
         self._stream_states = build_channel_stream_states(snapshot)
-        self._runtime_rows = [
+        self._replace_runtime_rows([
             apply_channel_stream_state(row, self._stream_states)
             for row in self._runtime_rows
-        ]
+        ])
         self._apply_runtime_rows()
         self.set_service_status(self._service_status)
 

@@ -108,7 +108,7 @@ def create_speed_test_session(concurrency: int):
     return ClientSession(
         connector=TCPConnector(ssl=False, limit=limit, limit_per_host=min(2, limit), ttl_dns_cache=300),
         timeout=ClientTimeout(total=None),
-        trust_env=True,
+        trust_env=False,
     )
 
 
@@ -148,7 +148,7 @@ async def get_speed_with_download(url: str, headers: dict = None, session: Any =
     request_timeout = min(timeout, max_duration) if max_duration else timeout
 
     if session is None:
-        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=True)
+        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=False)
         created_session = True
     else:
         created_session = False
@@ -217,7 +217,7 @@ async def get_headers(url: str, headers: dict = None, session: Any = None, timeo
     Get the headers of the url
     """
     if session is None:
-        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=True)
+        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=False)
         created_session = True
     else:
         created_session = False
@@ -242,7 +242,7 @@ async def get_url_content(url: str, headers: dict = None, session: Any = None,
     Get the content of the url
     """
     if session is None:
-        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=True)
+        session = ClientSession(connector=TCPConnector(ssl=False), trust_env=False)
         created_session = True
     else:
         created_session = False
@@ -434,7 +434,7 @@ async def get_delay_requests(url, timeout=speed_test_timeout, proxy=None):
     Get the delay of the url by requests
     """
     async with ClientSession(
-            connector=TCPConnector(ssl=False), trust_env=True
+            connector=TCPConnector(ssl=False), trust_env=False
     ) as session:
         start = time()
         end = None

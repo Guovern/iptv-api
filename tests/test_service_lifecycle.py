@@ -82,6 +82,29 @@ class ServiceLifecycleTests(unittest.TestCase):
         monitor.assert_called_once_with(4321)
         self.assertEqual(service_app._service_parent_pid, 4321)
 
+    def test_standalone_service_prints_sponsor_link(self):
+        runtime_config = SimpleNamespace(
+            app_port=5180,
+            rtmp_available=False,
+            public_url="http://127.0.0.1:5180",
+            service_port=8080,
+        )
+        with patch.dict(os.environ, {"GITHUB_ACTIONS": ""}), patch.object(
+            service_app, "config", runtime_config
+        ), patch.object(
+            service_app, "_configure_service_output"
+        ), patch.object(
+            service_app, "_service_port_is_open", return_value=False
+        ), patch.object(
+            service_app, "_start_parent_monitor"
+        ), patch.object(
+            service_app, "get_public_url", return_value="http://127.0.0.1:5180"
+        ), patch.object(service_app.app, "run"), patch("builtins.print") as output:
+            service_app.run_service(prompt_for_install=False, parent_pid=0)
+
+        lines = [str(call.args[0]) for call in output.call_args_list]
+        self.assertTrue(any("https://helodata.com?ref=iptvapi2" in line for line in lines))
+
     def test_identity_reports_service_owner(self):
         client = service_app.app.test_client()
         with patch.object(service_app, "_service_parent_pid", 4321), patch.object(

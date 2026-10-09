@@ -267,7 +267,7 @@ async def get_channels_by_subscribe_urls(
     try:
         async with ClientSession(
                 connector=TCPConnector(limit=fetch_workers),
-                trust_env=True,
+                trust_env=False,
         ) as session:
             tasks = [
                 asyncio.create_task(process_subscribe_channels(session, subscribe_url))

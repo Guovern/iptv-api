@@ -16,13 +16,14 @@ from updates.epg import get_epg
 from updates.epg.tools import write_to_xml, compress_to_gz
 from updates.subscribe import get_channels_by_subscribe_urls
 from utils.aggregator import ResultAggregator
-from utils.channel import get_channel_items, append_total_data, get_speed_test_status, test_speed
+from utils.channel import channel_alias, get_channel_items, append_total_data, get_speed_test_status, test_speed
 from utils.channel_repository import finish_run, prune_stream_screenshots, start_run
 from utils.config import config
 from utils.i18n import t
 from utils.requests.async_tools import check_ipv6_support_async
 from utils.reporting import Reporter
 from utils.run_state import write_run_state
+from utils.sponsors import helodata_console_message
 from utils.speed import clear_cache
 from utils.tools import (
     process_nested_dict,
@@ -150,6 +151,7 @@ class UpdateSource:
     # stage 1: prepare
     # ----------------------------
     def _prepare_channel_data(self):
+        channel_alias.reload()
         self.run_metrics = {}
         self.run_outcome = None
         self.whitelist_maps = load_whitelist_maps(constants.whitelist_path)
@@ -977,6 +979,7 @@ if __name__ == "__main__":
         version=info["version"],
         build_time=info["build_time"],
     )
+    cli_reporter.info("sponsor.helodata", helodata_console_message())
     log_new_version_if_available(info["version"], reporter=cli_reporter)
     start_version_log_monitor(info["version"], reporter=cli_reporter)
     loop = asyncio.new_event_loop()

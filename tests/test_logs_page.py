@@ -142,6 +142,50 @@ class LogsPageTests(unittest.TestCase):
 
         self.assertEqual(scrollbar.value(), 20)
 
+    def test_cleared_snapshot_refreshes_after_same_size_or_larger_rewrite(self):
+        path = os.path.join(self.temp_dir.name, "unmatch.log")
+        self.page.paths[4] = ("unmatched", path)
+        for replacement in ("new entry\n", "new longer entry\n"):
+            with self.subTest(replacement=replacement):
+                with open(path, "w", encoding="utf-8") as file:
+                    file.write("old entry\n")
+                self.page.selector.setCurrentIndex(4)
+                self.page.refresh()
+                self.page.clear_view()
+                self.page.refresh()
+                self.assertEqual(self.page.viewer.toPlainText(), "")
+                with open(path, "w", encoding="utf-8") as file:
+                    file.write(replacement)
+                self.page.refresh()
+                self.assertEqual(self.page.viewer.toPlainText(), replacement.rstrip())
+
+    def test_new_run_reveals_identical_regenerated_log(self):
+        self._write_runtime_log(["same entry"])
+        with patch("desktop_ui.pages.logs.read_run_state", return_value={"run_id": "old"}):
+            self.page.clear_view()
+        with patch("desktop_ui.pages.logs.read_run_state", return_value={"run_id": "new"}):
+            self.page.refresh()
+        self.assertEqual(self.page.viewer.toPlainText(), "same entry")
+
+    def test_cleared_runtime_log_still_shows_only_appended_entries(self):
+        self._write_runtime_log(["old entry"])
+        self.page.refresh()
+        self.page.clear_view()
+        with open(self.runtime_log, "a", encoding="utf-8") as file:
+            file.write("new entry\n")
+        self.page.refresh()
+        self.assertEqual(self.page.viewer.toPlainText(), "new entry")
+
+    def test_cleared_offset_resets_when_empty_file_is_observed(self):
+        self._write_runtime_log(["old entry"])
+        self.page.clear_view()
+        with open(self.runtime_log, "w", encoding="utf-8"):
+            pass
+        self.page.refresh()
+        self._write_runtime_log(["new entry"])
+        self.page.refresh()
+        self.assertEqual(self.page.viewer.toPlainText(), "new entry")
+
     def test_source_actions_share_the_tab_row(self):
         with patch.object(SourcesPage, "load"):
             page = SourcesPage()

@@ -71,8 +71,7 @@ class UpdateWorker(QObject):
 
     def _progress(self, title, progress, finished=False, url=None, now=None):
         timestamp = time.monotonic()
-        channel_completed = isinstance(url, dict) and url.get("status") == "completed"
-        if not finished and not channel_completed and timestamp - self._last_progress_emit < 0.1:
+        if not finished and timestamp - self._last_progress_emit < 0.1:
             return
         self._last_progress_emit = timestamp
         self.progress.emit(str(title), int(progress), bool(finished), url, now)
@@ -179,7 +178,7 @@ class OperationWorker(QObject):
 
     def _progress(self, current: int, total: int, name: str):
         percent = int(current / total * 100) if total else 0
-        if percent < self._last_progress:
+        if percent <= self._last_progress:
             return
         self._last_progress = percent
         self.progress.emit(name, percent)

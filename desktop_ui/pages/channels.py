@@ -25,12 +25,12 @@ from desktop_ui.stream_status import (
 )
 from desktop_ui.widgets import AccentPushButton, AppEditableComboBox, AppLineEdit, AppSearchLineEdit, ContinuousTreeItemDelegate, DangerPushButton, TableCheckBoxDelegate, TableCheckBoxHeader, apply_dialog_theme, configure_table_columns, localize_dialog_buttons, warning_message_box
 from utils.channel import write_channel_to_file
-from utils.channel_repository import add_manual_result, delete_channel_records, delete_channel_results, get_channel, list_categories, list_channel_results, list_channels, list_result_urls_by_channel, load_selected_snapshot, reset_channel_selection, set_channel_logo, set_channel_selection, upsert_manual_channel
+from utils.channel_repository import add_manual_result, count_channels, delete_channel_records, delete_channel_results, get_channel, list_categories, list_channel_results, list_channels, list_result_urls_by_channel, load_selected_snapshot, reset_channel_selection, set_channel_logo, set_channel_selection, upsert_manual_channel
 from utils.config import config, resource_path
 from utils.i18n import t
 from utils.local_source_importer import _decode, parse_local_source_file
 from utils.tools import check_url_by_keywords, get_public_url, get_urls_from_file
-from utils.user_actions import add_channel, add_manual_channel_result, add_to_blacklist, add_to_whitelist, delete_channels, delete_manual_channel_results
+from utils.user_actions import add_channel, add_manual_channel_result, add_to_blacklist, add_to_whitelist, delete_channels, delete_manual_channel_results, delete_manual_channel_results_many
 from utils.whitelist import is_url_whitelisted, load_whitelist_maps
 
 
@@ -1076,17 +1076,16 @@ class ChannelCenterPage(QWidget):
                 for key in ("healthy_count", "warning_count", "offline_count")
             ),
         }
-        try:
-            matched_channels = list_channels(
-                constants.channel_results_path,
-                search=self.search.text(),
-            )
-        except Exception:
-            matched_channels = []
-        matched_streaming_count = sum(
-            row.get("channel_key") in self._stream_states
-            for row in matched_channels
-        )
+        matched_streaming_count = 0
+        if self._stream_states:
+            try:
+                matched_streaming_count = count_channels(
+                    constants.channel_results_path,
+                    list(self._stream_states),
+                    search=self.search.text(),
+                )
+            except Exception:
+                matched_streaming_count = 0
 
         category_blocker = QSignalBlocker(self.category_tree)
         smart_blocker = QSignalBlocker(self.smart_tree)
@@ -1308,7 +1307,10 @@ class ChannelCenterPage(QWidget):
     def _prepare_channel_rows(self, rows, checked_keys=None):
         selected_keys = self._checked_channel_keys if checked_keys is None else checked_keys
         try:
-            result_urls = list_result_urls_by_channel(constants.channel_results_path)
+            result_urls = list_result_urls_by_channel(
+                constants.channel_results_path,
+                [row["channel_key"] for row in rows],
+            )
             whitelist_maps = load_whitelist_maps(constants.whitelist_path)
             blacklist = get_urls_from_file(constants.blacklist_path, pattern_search=False)
         except Exception:
@@ -1549,6 +1551,10 @@ class ChannelCenterPage(QWidget):
         self.add_result_button.setEnabled(count > 0)
         selected_channels = self.selected_channels()
         streaming_channels = [row for row in selected_channels if row.get("streaming")]
+        playable = any(
+            str(row.get("best_url") or "").strip()
+            for row in selected_channels
+        )
         delete_allowed = count > 0 and not streaming_channels
         self.delete_channel_button.setEnabled(delete_allowed)
         self.retest_channel_button.setEnabled(count > 0)
@@ -1557,13 +1563,9 @@ class ChannelCenterPage(QWidget):
         self.channel_delete_action.setEnabled(delete_allowed)
         self.channel_retest_action.setEnabled(count > 0)
         self.channel_stream_action.setEnabled(count > 0)
-        self.channel_play_action.setEnabled(
-            any(self._best_channel_playback_result(row) for row in selected_channels)
-        )
+        self.channel_play_action.setEnabled(playable)
         self.play_selected_button.setVisible(count > 0)
-        self.play_selected_button.setEnabled(
-            any(self._best_channel_playback_result(row) for row in selected_channels)
-        )
+        self.play_selected_button.setEnabled(playable)
         stream_result_keys = {
             result_key
             for row in streaming_channels
@@ -1584,10 +1586,12 @@ class ChannelCenterPage(QWidget):
             self._edit_channel_logo(row)
             return
         if row and self.channel_model.columns[index.column()][0] != "batch_selected":
-            if self._drawer_channel_key != row["channel_key"]:
+            channel_changed = self._drawer_channel_key != row["channel_key"]
+            if channel_changed:
                 self._checked_result_keys.clear()
             self._drawer_channel_key = row["channel_key"]
-            self._load_results(row["channel_key"])
+            if channel_changed:
+                self._load_results(row["channel_key"])
             self.results_title.setText(row["name"])
             self.show_result_drawer()
 
@@ -2420,24 +2424,21 @@ class ChannelCenterPage(QWidget):
         if not box.exec():
             return
         deleted_keys = {row["channel_key"] for row in rows}
-        manual_sources = {}
-        for row in rows:
-            try:
-                manual_sources[row["name"]] = [
-                    result.get("url")
-                    for result in list_channel_results(
-                        constants.channel_results_path,
-                        row["channel_key"],
-                    )
-                    if result.get("origin") == "local" and result.get("url")
-                ]
-            except Exception:
-                manual_sources[row["name"]] = []
+        try:
+            local_urls = list_result_urls_by_channel(
+                constants.channel_results_path,
+                list(deleted_keys),
+                origin="local",
+            )
+        except Exception:
+            local_urls = {}
+        manual_sources = {
+            row["name"]: local_urls.get(row["channel_key"], [])
+            for row in rows
+        }
         delete_channels([row["name"] for row in rows])
         delete_channel_records(constants.channel_results_path, list(deleted_keys))
-        for channel_name, urls in manual_sources.items():
-            if urls:
-                delete_manual_channel_results(channel_name, urls)
+        delete_manual_channel_results_many(manual_sources)
         self._checked_channel_keys.difference_update(deleted_keys)
         self.hide_result_drawer()
         self.reload()

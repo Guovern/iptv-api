@@ -19,7 +19,7 @@ from utils.db import ensure_result_data_schema
 from utils.db import get_db_connection, return_db_connection
 from utils.ffmpeg import probe_url_sync, resolve_ffmpeg_executable
 from utils.i18n import t
-from utils.process import no_window_process_kwargs
+from utils.process import direct_network_env, no_window_process_kwargs
 from utils.rtmp_runtime import rtmp_runtime_status
 from utils.tools import join_url, resource_path, render_nginx_conf
 
@@ -44,7 +44,15 @@ HLS_IDLE_TIMEOUT = config.rtmp_idle_timeout
 HLS_WAIT_TIMEOUT = 30
 HLS_WAIT_INTERVAL = 0.5
 MAX_STREAMS = config.rtmp_max_streams
-hls_temp_path = resource_path(os.path.join(nginx_dir, 'temp', 'hls'))
+
+
+def _get_hls_temp_path(runtime_dir):
+    if sys.platform.startswith("linux"):
+        return "/tmp/hls"
+    return resource_path(os.path.join(runtime_dir, "temp", "hls"))
+
+
+hls_temp_path = _get_hls_temp_path(nginx_dir)
 
 _hls_monitor_started_evt = threading.Event()
 _hls_monitor_lock = threading.Lock()
@@ -159,6 +167,7 @@ def _start_ffmpeg_process(cmd, channel_id):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         stdin=subprocess.DEVNULL,
+        env=direct_network_env(),
         **kwargs,
     )
     with STREAMS_LOCK:

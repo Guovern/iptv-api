@@ -10,17 +10,20 @@
 
 <p align="center">
   <a href="https://trendshift.io/repositories/12327" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12327" alt="Guovin%2Fiptv-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-  <a href="https://trendshift.io/repositories/12327?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-12327" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/12327/weekly" alt="Guovin%2Fiptv-api | Trendshift" width="250" height="55"/></a>
+  <a href="https://trendshift.io/repositories/12327?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-12327" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/12327/weekly" alt="Guovin%2Fiptv-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+  <a href="https://www.star-history.com/guovin/iptv-api">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank" /><img src="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank" alt="Star History Rank" style="height: 55px;" height="55" /></picture>
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Guovin/iptv-api/releases/latest">
+  <a href="https://github.com/Guovin/iptv-api/releases/latest" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/v/release/guovin/iptv-api?label=Version" />
   </a>
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/python-3.14-47c219?label=Python" />
   </a>
-  <a href="https://github.com/Guovin/iptv-api/releases/latest">
+  <a href="https://github.com/Guovin/iptv-api/releases/latest" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/downloads/guovin/iptv-api/total?label=GUI%20Downloads" />
   </a>
   <a href="https://hub.docker.com/repository/docker/guovern/iptv-api">
@@ -29,7 +32,7 @@
   <a href="https://github.com/Guovin/iptv-api/stargazers">
     <img src="https://img.shields.io/github/stars/guovin/iptv-api?label=Stars" />
   </a>
-  <a href="https://github.com/Guovin/iptv-api/fork">
+  <a href="https://github.com/Guovin/iptv-api/fork" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/forks/guovin/iptv-api?label=Forks" />
   </a>
 </p>
@@ -80,53 +83,42 @@
 
 ## 赞助商
 
-<p align="center">
-  <a href="https://www.ipwo.net/?ref=githubGuovin">
-    <img src="./docs/images/ipwo.png" alt="Sponsored by IPWO - 住宅代理网络">
-  </a>
-</p>
-<p align="center">
-  <sub>
-    <a href="https://www.ipwo.net/?ref=githubGuovin"><strong>IPWO</strong></a> 提供稳定的住宅代理网络，适用于公开数据采集、接口调试、自动化测试与多地区访问验证等合规场景。
-    支持 HTTP / HTTPS / SOCKS5，优惠码：<strong><code>0105</code></strong>。
-    请在合法授权并遵守目标站点条款的前提下使用。
-  </sub>
-</p>
+| 赞助商 | 服务介绍                                                                                                                                                                                                                                                                                                                                                              |
+|:---:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a href="https://helodata.com?ref=iptvapi1"><img src="./docs/images/helodata.png" alt="Helodata" width="150"></a> | <p align="center"><a href="https://helodata.com?ref=iptvapi1"><img src="./docs/images/helodata-banner.png" alt="Helodata 全球代理网络" width="720"></a></p><a href="https://helodata.com?ref=iptvapi1"><strong>Helodata</strong></a> 提供全球代理基础设施，覆盖 195+国家和地区，拥有8000万+ 合规授权住宅 IP，并支持住宅、ISP、移动及数据中心代理等，为 AI、爬虫与自动化应用提供稳定可靠的数据访问。使用优惠码 <strong><code>iptvapi</code></strong> 可享专属折扣。                     |
 
 <p align="center">
   <a href="mailto:360996299@qq.com?subject=%E6%88%90%E4%B8%BA%E8%B5%9E%E5%8A%A9%E5%95%86">成为赞助商</a>
 </p>
 
-> [!IMPORTANT]
-> 1. 前往`Govin`公众号回复`cdn`获取加速地址，提升订阅源与频道图标等资源的访问速度
-> 2. 本项目不提供数据源，请自行添加后生成结果（[如何添加数据源？](./docs/tutorial.md#添加数据源与更多)）
-> 3. 生成结果质量取决于数据源与网络环境等因素，请合理调整[配置参数](#配置)以获取更符合需求的结果
-
 ## 核心特性
 
-| 功能        | 支持状态 | 说明                                         |
+| 功能        | 支&#8288;持&#8288;状&#8288;态 | 说明                                         |
 |:----------|:----:|:-------------------------------------------|
-| **自定义模板** |  ✅   | 生成自己想要的频道菜单                                |
-| **频道别名**  |  ✅   | 提升频道结果获取量与准确率，支持正则表达式                      |
-| **多源聚合**  |  ✅   | 本地源、订阅源（支持设置UA，识别无效地址并自动停用）                |
-| **推流**    |  ✅   | 改善弱网播放体验，支持浏览器直接播放，自动转码适配                  |
-| **回放类接口** |  ✅   | 回放类接口的获取与生成                                |
+| **自&#8288;定&#8288;义&#8288;模&#8288;板** |  ✅   | 生成自己想要的频道菜单                                |
+| **频&#8288;道&#8288;别&#8288;名**  |  ✅   | 已收录 2,769 个频道、7,254 条别名（含 48 条正则）；自动归一化并匹配名称差异 |
+| **多&#8288;源&#8288;聚&#8288;合**  |  ✅   | 本地源、订阅源（支持设置UA，识别无效地址并自动停用）                |
+| **推&#8288;流**    |  ✅   | 改善弱网播放体验，支持浏览器直接播放，自动转码适配                  |
+| **回&#8288;放&#8288;类&#8288;接&#8288;口** |  ✅   | 回放类接口的获取与生成                                |
 | **EPG**   |  ✅   | 获取并显示频道预告内容                                |
-| **频道台标**  |  ✅   | 自定义频道台标，支持本地添加或远程库                         |
-| **测速验效**  |  ✅   | 获取延迟、速率、分辨率、帧率，过滤无效接口，支持实时输出结果             |
-| **播放截图**  |  ✅   | 可选自动截图，辅助验证频道内容，支持 GUI 预览与批量刷新 |
-| **广告过滤**  |  ✅   | 自动识别并过滤无信号/广告等循环占位源                        |
-| **高级偏好**  |  ✅   | 速率、分辨率、黑/白名单、归属地与运营商自定义过滤                  |
-| **结果管理**  |  ✅   | 结果分类存储与访问、日志记录、未匹配频道记录、统计分析、冻结过滤/解冻回归、数据缓存 |
-| **定时任务**  |  ✅   | 定时或间隔执行更新                                  |
-| **暂停与继续** |  ✅   | 桌面端更新过程中可暂停，并从当前进度继续                         |
-| **多平台部署** |  ✅   | 工作流、命令行、GUI 软件、Docker (amd64/arm64/arm v7) |
-| **更多功能**  |  ✨   | 详见[配置参数](#配置)章节                            |
+| **频&#8288;道&#8288;台&#8288;标**  |  ✅   | 自定义频道台标，支持本地添加或远程库                         |
+| **测&#8288;速&#8288;验&#8288;效**  |  ✅   | 获取延迟、速率、分辨率、帧率，过滤无效接口，支持实时输出结果             |
+| **播&#8288;放&#8288;截&#8288;图**  |  ✅   | 可选自动截图，辅助验证频道内容，支持 GUI 预览与批量刷新 |
+| **广&#8288;告&#8288;过&#8288;滤**  |  ✅   | 自动识别并过滤无信号/广告等循环占位源                        |
+| **高&#8288;级&#8288;偏&#8288;好**  |  ✅   | 速率、分辨率、黑/白名单、归属地与运营商自定义过滤                  |
+| **结&#8288;果&#8288;管&#8288;理**  |  ✅   | 结果分类存储与访问、日志记录、未匹配频道记录、统计分析、冻结过滤/解冻回归、数据缓存 |
+| **定&#8288;时&#8288;任&#8288;务**  |  ✅   | GUI、命令行与 Docker 可定时或间隔执行，不作用于 GitHub Actions |
+| **暂&#8288;停&#8288;与&#8288;继&#8288;续** |  ✅   | 桌面端更新过程中可暂停，并从当前进度继续                         |
+| **多&#8288;平&#8288;台&#8288;部&#8288;署** |  ✅   | 工作流、命令行、GUI 软件、Docker (amd64/arm64/arm v7) |
+| **更&#8288;多&#8288;功&#8288;能**  |  ✨   | 详见[配置参数](#配置)章节                            |
 
 ## 配置
 
 > [!NOTE]\
 > 以下配置项位于 `config/config.ini` 文件中，支持通过配置文件或环境变量修改，保存后重启即可生效。也可查看独立的[配置参数文档](./docs/config.md)。
+
+> [!TIP]
+> 生成结果质量取决于数据源与网络环境等因素，请合理调整配置参数以获取更符合需求的结果。
 
 <details>
 <summary>点击展开查看配置参数</summary>
@@ -158,12 +150,12 @@
 | app_port                 | 高级兼容设置：Flask 内部 API 端口，通常无需修改，也不应作为用户访问端口                                                                        | 5180                                     |
 | public_scheme            | 高级兼容设置：旧版公网协议，仅在 `public_url` 留空时生效；可选值: http、https                                                            | http                                     |
 | public_domain            | 高级兼容设置：旧版公网 Host，仅在 `public_url` 留空时生效，默认使用本机 IP                                                                 | 127.0.0.1                                |
-| cdn_url                  | CDN 代理加速地址，用于订阅源、频道图标等资源的加速访问；支持配置多个（用英文逗号分隔），订阅源与 EPG 按顺序逐个回退拉取，任一镜像成功即停，频道图标使用第一个地址                                                                                        |                                          |
-| http_proxy               | HTTP 代理地址，用于获取订阅源等网络请求                                                                                               |                                          |
+| cdn_url                  | CDN 代理加速地址，用于订阅源、EPG 与频道图标等支持的资源；GitHub Actions 不使用该配置加速 Pages 发布结果。支持多个地址（英文逗号分隔） |                                          |
+| http_proxy               | HTTP 代理地址，仅用于获取订阅源和 EPG 数据；测速、媒体探测和截图保持直连                                                              |                                          |
 | open_local               | 开启本地源功能，将使用模板文件与本地源文件（local.txt）中的数据                                                                                 | True                                     |
 | open_subscribe           | 开启订阅源功能                                                                                                              | True                                     |
-| open_auto_disable_source | 开启自动停用失效地址，当请求重试后失败、内容为空或没有匹配到符合条件的值时，会自动在 `config/subscribe.txt` 和 `config/epg.txt` 中对应地址前添加 # 进行停用                 | False                                    |
-| open_history             | 开启使用历史更新结果（包含模板与结果文件的接口），合并至本次更新中                                                                                    | True                                     |
+| open_auto_disable_source | 开启自动停用失效地址，失效项会在 `config/subscribe.txt` 和 `config/epg.txt` 中加 #；Actions 不会提交该变更 | False                                    |
+| open_history             | 开启使用历史更新结果（包含模板与结果文件的接口），合并至本次更新；Actions 仅尝试从短期缓存恢复历史 | True                                     |
 | open_headers             | 开启使用 M3U 内含的请求头验证信息，用于测速等操作，个别播放器可能不支持播放这类含验证信息的接口                                                          | True                                     |
 | user_agent               | 全局请求 User-Agent，用于拉取订阅源、测速以及写入 m3u 结果（无需开启 open_headers），留空则使用内置默认 UA；优先级：接口自带 UA > 订阅地址 UA > 全局 UA > 内置默认 UA                            |                                          |
 | open_speed_test          | 开启测速功能，获取响应时间、速率、分辨率                                                                                                 | True                                     |
@@ -212,6 +204,9 @@
 
 ### 配置与结果目录
 
+> [!NOTE]
+> 本项目不提供数据源，请自行添加后生成结果（[如何添加数据源？](./docs/tutorial.md#添加数据源与更多)）。
+
 ```
 iptv-api/                  # 项目根目录
 ├── config                 # 配置文件目录，包含配置文件、模板文件等
@@ -225,7 +220,7 @@ iptv-api/                  # 项目根目录
 │   └── subscribe.txt      # 频道订阅源列表
 │   └── local.txt          # 本地源文件
 │   └── epg.txt            # EPG订阅源列表
-└── output                 # 结果文件目录，包含生成的结果文件等
+└── output                 # 本地运行结果目录，不应提交到 Git
     └── data               # 结果数据缓存目录
     └── epg                # EPG结果目录
     └── ipv4               # IPv4结果目录
@@ -244,7 +239,21 @@ iptv-api/                  # 项目根目录
 
 ### 工作流
 
-Fork 本项目并开启工作流更新，具体步骤请见[详细教程](./docs/tutorial.md)
+可直接访问主仓库的 [GitHub Pages 结果页](https://guovin.github.io/iptv-api/)，复制所需的在线链接到播放器订阅，也可预览或下载结果文件。使用主仓库结果无需 Fork 或运行工作流；如需使用自己的配置生成结果，请继续以下部署步骤。
+
+> [!WARNING]
+> GitHub Actions 仅支持低频手动生成，结果通过 Pages Artifact 和每次运行独立的预发布版发布，不再提交到 Git。
+> 旧的 `raw.githubusercontent.com/.../output/...` 链接不再更新；需要定时执行时请使用 Docker、命令行或 GUI。
+
+<a href="https://github.com/Guovin/iptv-api/fork" target="_blank" rel="noopener noreferrer">Fork 本项目</a>后，先在 `Settings → Pages` 中将发布源设置为 `GitHub Actions`，再手动运行
+`Generate playlist manually`。播放器在线使用请打开 Pages 页面获取相应的结果地址；页面可预览文件，下载按钮指向本次 Release 附件。整个过程不会产生 Git 提交。
+
+```text
+https://您的GitHub用户名.github.io/仓库名/result.m3u
+https://您的GitHub用户名.github.io/仓库名/result.txt
+```
+
+迁移和完整操作步骤请见[详细教程](./docs/tutorial.md#工作流部署)。
 
 ### 命令行
 
@@ -285,7 +294,10 @@ pipenv run ui
 pipenv run ui_build
 ```
 
-旧版 Tkinter 界面已弃用，仅为兼容现有用户而临时保留，并将在后续版本中移除。该界面不再维护、修复问题或新增功能；过渡期间仍可通过 `pipenv run legacy_ui` 启动，并通过 `pipenv run legacy_ui_build` 打包。分辨率检测需要系统安装 FFmpeg。Windows 可使用随包提供的 nginx-rtmp；macOS 会自动检测系统中带 RTMP 模块的 nginx，也可通过 `IPTV_API_NGINX_PATH` 和 `IPTV_API_NGINX_RTMP_MODULE` 指定可执行文件与动态模块。
+> [!WARNING]
+> 旧版 Tkinter 界面已弃用，仅为兼容现有用户而临时保留，并将在后续版本中移除。该界面不再维护、修复问题或新增功能；过渡期间仍可通过 `pipenv run legacy_ui` 启动，并通过 `pipenv run legacy_ui_build` 打包。
+
+分辨率检测需要系统安装 FFmpeg。Windows 可使用随包提供的 nginx-rtmp；macOS 会自动检测系统中带 RTMP 模块的 nginx，也可通过 `IPTV_API_NGINX_PATH` 和 `IPTV_API_NGINX_RTMP_MODULE` 指定可执行文件与动态模块。
 
 ### Docker
 
@@ -305,7 +317,8 @@ docker compose up -d
 docker pull guovern/iptv-api:latest
 ```
 
-🚀 代理加速（若拉取失败可以使用该命令，但有可能拉取的是旧版本）：
+> [!CAUTION]
+> 若官方镜像拉取失败，可使用以下代理加速地址；它可能提供旧版本镜像。
 
 ```bash
 docker pull docker.1ms.run/guovern/iptv-api:latest
@@ -326,6 +339,7 @@ docker run -d -p 80:8080 guovern/iptv-api
 | PUBLIC_PORT     | 兼容配置：`PUBLIC_URL` 留空时使用的宿主机映射端口                    | 80        |
 | NGINX_HTTP_PORT | 高级兼容配置：容器内部 HTTP 端口，通常保持默认                        | 8080      |
 
+> [!NOTE]
 > 当宿主机/Docker 已启用 IPv6 时，容器会自动同时监听 IPv6 地址，无需额外配置；纯 IPv4 或禁用 IPv6 的环境则自动跳过。
 
 如果需要修改环境变量，在上述运行命令后添加以下参数：
@@ -373,11 +387,10 @@ docker run -d -p 80:8080 guovern/iptv-api
 
 **RTMP 推流：**
 
-> [!NOTE]
-> 1. 如果是服务器部署，建议通过 `PUBLIC_URL` 配置完整公网地址；旧版 `PUBLIC_DOMAIN` 与 `PUBLIC_PORT` 仍兼容
-> 2. 开启推流后，默认会将获取到的接口（如订阅源）进行推流；请仅对你有明确授权、可合法分发或仅用于内部测试的内容启用该功能
-> 3. 如果需要对本地视频源进行推流，可在`config`目录下新建`hls`文件夹，将以`频道名称命名`的视频文件放入其中，程序会自动推流到对应的频道中
-> 4. 在中国大陆使用时，请特别确认内容授权、版权、网络视听与广播电视等相关合规要求；不要将本项目用于传播、转发或公开分发未经授权的直播源/节目源
+> [!WARNING]
+> 开启推流后会默认推流获取到的接口（如订阅源）。请仅对你有明确授权、可合法分发或仅用于内部测试的内容启用该功能。在中国大陆使用时，请特别确认内容授权、版权、网络视听与广播电视等相关合规要求；不要将本项目用于传播、转发或公开分发未经授权的直播源/节目源。
+
+如果是服务器部署，建议通过 `PUBLIC_URL` 配置完整公网地址；旧版 `PUBLIC_DOMAIN` 与 `PUBLIC_PORT` 仍兼容。若需推流本地视频源，可在 `config` 目录下新建 `hls` 文件夹，将以频道名称命名的视频文件放入其中，程序会自动推流到对应频道中。
 
 | 推流接口          | 描述           |
 |:--------------|:-------------|
@@ -408,6 +421,9 @@ docker run -d -p 80:8080 guovern/iptv-api
 
 微信公众号搜索 Govin，或扫码，接收更新推送、学习更多使用技巧：
 
+> [!TIP]
+> 回复 `cdn` 可获取加速地址，提升订阅源与频道图标等资源的访问速度。
+
 ![微信公众号](./static/images/qrcode.jpg)
 
 ### 联系我
@@ -436,4 +452,5 @@ docker run -d -p 80:8080 guovern/iptv-api
 
 [AGPL-3.0](./LICENSE) License &copy; 2024-PRESENT [Govin](https://github.com/guovin)
 
-> 注意：本项目采用 AGPL-3.0。若将修改后的程序作为网络服务、公开容器镜像或以其他对外服务方式运行，须向使用者提供包括修改在内的完整源代码。详见：https://www.gnu.org/licenses/agpl-3.0.html
+> [!IMPORTANT]
+> 本项目采用 AGPL-3.0。若将修改后的程序作为网络服务、公开容器镜像或以其他对外服务方式运行，须向使用者提供包括修改在内的完整源代码。详见：https://www.gnu.org/licenses/agpl-3.0.html

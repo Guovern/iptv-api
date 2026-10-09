@@ -78,6 +78,35 @@ print("Stream #0:1: Audio: aac, 48000 Hz, stereo", file=sys.stderr)
             self.assertEqual(result["error"], "decode_failed")
             self.assertFalse(previous.exists())
 
+    async def test_capture_does_not_inherit_proxy_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            executable = self._executable(
+                directory,
+                """
+import os
+import sys
+if any(os.environ.get(name) for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY")):
+    raise SystemExit(1)
+with open(sys.argv[-1], "wb") as image:
+    image.write(b"x" * 2048)
+print("Stream #0:0: Video: h264, 1280x720, 25 fps", file=sys.stderr)
+""",
+            )
+            with patch.dict(
+                os.environ,
+                {"HTTP_PROXY": "http://proxy.example.com:7890"},
+            ), patch(
+                "utils.ffmpeg.screenshot.resolve_ffmpeg_executable",
+                return_value=executable,
+            ):
+                result = await capture_stream_screenshot(
+                    "https://example.invalid/live.m3u8",
+                    "result-key",
+                    directory,
+                )
+
+            self.assertEqual(result["status"], "success")
+
 
 class StreamScreenshotRepositoryTests(unittest.TestCase):
     def setUp(self):

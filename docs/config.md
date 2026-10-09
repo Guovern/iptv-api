@@ -40,12 +40,12 @@
 | app_port               | 高级兼容设置：Flask 内部 API 端口，通常无需修改，也不应作为用户访问端口                                                                        | 5180                                     |
 | public_scheme          | 高级兼容设置：旧版公网协议，仅在 `public_url` 留空时生效；可选值: http、https                                                            | http                                     |
 | public_domain          | 高级兼容设置：旧版公网 Host，仅在 `public_url` 留空时生效，默认使用本机 IP                                                                 | 127.0.0.1                                |
-| cdn_url                | CDN 代理加速地址，用于订阅源、频道图标等资源的加速访问；支持配置多个（用英文逗号分隔），订阅源与 EPG 按顺序逐个回退拉取，任一镜像成功即停，频道图标使用第一个地址                                                                                        |                                          |
-| http_proxy             | HTTP 代理地址，用于获取订阅源等网络请求                                                                                               |                                          |
+| cdn_url                | CDN 代理加速地址，用于订阅源、EPG 与频道图标等支持的资源；GitHub Actions 不使用该配置加速 Pages 发布结果。支持多个地址（英文逗号分隔） |                                          |
+| http_proxy             | HTTP 代理地址，仅用于获取订阅源和 EPG 数据；测速、媒体探测和截图保持直连                                                              |                                          |
 | open_local             | 开启本地源功能，将使用模板文件与本地源文件（local.txt）中的数据                                                                                 | True                                     |
 | open_subscribe         | 开启订阅源功能                                                                                                              | True                                     |
-| open_auto_disable_source | 开启自动停用失效地址，当请求重试后失败、内容为空或没有匹配到符合条件的值时，会自动在 `config/subscribe.txt` 和 `config/epg.txt` 中对应地址前添加 # 进行停用 | False                                    |
-| open_history           | 开启使用历史更新结果（包含模板与结果文件的接口），合并至本次更新中                                                                                    | True                                     |
+| open_auto_disable_source | 开启自动停用失效地址，失效项会在 `config/subscribe.txt` 和 `config/epg.txt` 中加 #；GitHub Actions 不会提交该变更 | False                                    |
+| open_history           | 开启使用历史更新结果（包含模板与结果文件的接口），合并至本次更新；GitHub Actions 仅尝试从短期缓存恢复历史 | True                                     |
 | open_headers           | 开启使用 M3U 内含的请求头验证信息，用于测速等操作，个别播放器可能不支持播放这类含验证信息的接口                                                          | True                                     |
 | user_agent             | 全局请求 User-Agent，用于拉取订阅源、测速以及写入 m3u 结果（无需开启 open_headers），留空则使用内置默认 UA；优先级：接口自带 UA > 订阅地址 UA > 全局 UA > 内置默认 UA                            |                                          |
 | open_speed_test        | 开启测速功能，获取响应时间、速率、分辨率                                                                                                 | True                                     |

@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from flask import Flask, cli as flask_cli, send_from_directory, make_response, request, jsonify, Response
 from utils.tools import get_result_file_content, resource_path, get_public_url, get_version_info
 from utils.config import config
+from utils.resources import bundled_resource_path
 import utils.constants as constants
 import atexit
 from service.rtmp import start_rtmp_service, stop_rtmp_service, app_rtmp_url, hls_temp_path, STREAMS_LOCK, \
@@ -20,6 +21,7 @@ import logging
 from utils.i18n import t
 from utils.rtmp_runtime import install_rtmp_runtime, rtmp_runtime_status
 from utils.run_state import read_run_state
+from utils.sponsors import helodata_console_message
 from utils.version_check import log_new_version_if_available, start_version_log_monitor
 from werkzeug.utils import secure_filename
 import mimetypes
@@ -126,7 +128,7 @@ def show_index():
 
 @app.route("/favicon.ico")
 def favicon():
-    return send_from_directory(resource_path(''), 'favicon.ico',
+    return send_from_directory(os.path.dirname(bundled_resource_path('favicon.ico')), 'favicon.ico',
                                mimetype='image/vnd.microsoft.icon')
 
 
@@ -517,6 +519,8 @@ def run_service(prompt_for_install=True, parent_pid=0):
             _service_parent_pid = int(parent_pid or 0)
             _service_started_at = time.time()
             _start_parent_monitor(_service_parent_pid)
+            if not _service_parent_pid:
+                print(helodata_console_message())
             if prompt_for_install:
                 _prompt_rtmp_install()
             rtmp_started = False

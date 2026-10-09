@@ -2,10 +2,10 @@ import os
 import re
 from collections import defaultdict
 
-from PySide6.QtCore import QIODevice, QSaveFile, QSettings, QSignalBlocker, QSize, QTimer, Signal, Qt
+from PySide6.QtCore import QIODevice, QSaveFile, QSettings, QSignalBlocker, QSize, QTimer, Qt
 from PySide6.QtGui import QColor, QPalette, QTextCursor
-from PySide6.QtWidgets import QAbstractItemView, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHeaderView, QHBoxLayout, QLabel, QSplitter, QStackedWidget, QTabWidget, QTableWidget, QTableWidgetItem, QTreeWidgetItem, QVBoxLayout, QWidget
-from qfluentwidgets import BodyLabel, CardWidget, ComboBox, FlowLayout, FluentIcon, InfoBar, InfoBarPosition, PushButton, SegmentedWidget, StrongBodyLabel, ToolButton, TreeWidget, isDarkTheme, qconfig
+from PySide6.QtWidgets import QAbstractItemView, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHeaderView, QHBoxLayout, QSplitter, QStackedWidget, QStyledItemDelegate, QTabWidget, QTableWidget, QTableWidgetItem, QTreeWidgetItem, QVBoxLayout, QWidget
+from qfluentwidgets import BodyLabel, CardWidget, ComboBox, FluentIcon, InfoBar, InfoBarPosition, PushButton, SegmentedWidget, StrongBodyLabel, ToolButton, TreeWidget, isDarkTheme, qconfig
 
 import utils.constants as constants
 from desktop_ui.widgets import AccentPushButton, AppLineEdit, AppPlainTextEdit, AppSearchLineEdit, ContinuousTreeItemDelegate, DangerPushButton, TableCheckBoxDelegate, TableCheckBoxHeader, apply_dialog_theme, configure_table_columns, localize_dialog_buttons, warning_message_box
@@ -16,72 +16,28 @@ from utils.i18n import t
 from utils.local_source_importer import merge_records, parse_local_source_file
 
 
-class AliasTagsEditor(QWidget):
-    changed = Signal()
-    colors = ("#2563EB", "#7C3AED", "#DB2777", "#059669", "#D97706", "#0891B2")
+class RuleComboDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        combo = ComboBox(parent)
+        for label, value in (
+            (t("desktop.rule_exact"), "exact"),
+            (t("desktop.rule_keyword"), "keyword"),
+        ):
+            combo.addItem(label, userData=value)
+        combo.activated.connect(lambda *_: self.commitData.emit(combo))
+        combo.activated.connect(lambda *_: self.closeEditor.emit(combo))
+        return combo
 
-    def __init__(self, aliases=None, parent=None):
-        super().__init__(parent)
-        self.setObjectName("aliasTagsEditor")
-        self.setStyleSheet("QWidget#aliasTagsEditor { background-color: transparent; }")
-        self.aliases = list(aliases or [])
-        self.tags = QWidget(self)
-        self.tags.setObjectName("aliasTags")
-        self.tags.setStyleSheet("QWidget#aliasTags { background-color: transparent; }")
-        self.flow = FlowLayout(self.tags, isTight=True)
-        self.flow.setContentsMargins(0, 0, 0, 0)
-        self.flow.setHorizontalSpacing(5)
-        self.flow.setVerticalSpacing(4)
-        self.edit_button = ToolButton(FluentIcon.PENCIL_INK, self)
-        self.edit_button.setToolTip(t("desktop.edit_aliases"))
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(6, 3, 4, 3)
-        layout.setSpacing(6)
-        layout.addWidget(self.tags, 1)
-        layout.addWidget(self.edit_button)
-        self.edit_button.clicked.connect(self.edit)
-        self._rebuild()
+    def setEditorData(self, editor, index):
+        value = index.data(Qt.ItemDataRole.UserRole)
+        editor.setCurrentIndex(next(
+            (position for position in range(editor.count()) if editor.itemData(position) == value),
+            0,
+        ))
 
-    def _rebuild(self):
-        self.flow.removeAllWidgets()
-        foreground = "#F8FAFC"
-        for index, alias in enumerate(self.aliases[:5]):
-            tag = QLabel(alias, self.tags)
-            tag.setStyleSheet(
-                f"QLabel {{ color: {foreground}; background-color: {self.colors[index % len(self.colors)]}; "
-                "border-radius: 9px; padding: 2px 8px; }"
-            )
-            self.flow.addWidget(tag)
-        if len(self.aliases) > 5:
-            more = QLabel(f"+{len(self.aliases) - 5}", self.tags)
-            background = "#475569" if isDarkTheme() else "#E2E8F0"
-            color = "#F8FAFC" if isDarkTheme() else "#334155"
-            more.setStyleSheet(f"QLabel {{ color: {color}; background-color: {background}; border-radius: 9px; padding: 2px 8px; }}")
-            self.flow.addWidget(more)
-        self.setToolTip("\n".join(self.aliases))
-
-    def edit(self):
-        dialog = QDialog(self)
-        apply_dialog_theme(dialog)
-        dialog.setWindowTitle(t("desktop.edit_aliases"))
-        dialog.resize(480, 360)
-        layout = QVBoxLayout(dialog)
-        hint = BodyLabel(t("desktop.alias_editor_hint"), dialog)
-        editor = AppPlainTextEdit(dialog)
-        editor.setPlainText("\n".join(self.aliases))
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save, parent=dialog)
-        localize_dialog_buttons(buttons)
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(hint)
-        layout.addWidget(editor, 1)
-        layout.addWidget(buttons)
-        if dialog.exec() != QDialog.DialogCode.Accepted:
-            return
-        values = [part.strip() for line in editor.toPlainText().splitlines() for part in line.split(",") if part.strip()]
-        self.aliases = list(dict.fromkeys(values))
-        self._rebuild()
-        self.changed.emit()
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.currentText(), Qt.ItemDataRole.DisplayRole)
+        model.setData(index, editor.currentData(), Qt.ItemDataRole.UserRole)
 
 
 class SourceEditor(QWidget):
@@ -94,6 +50,8 @@ class SourceEditor(QWidget):
         self.kind = kind
         self.path_provider = path_provider
         self.rows = []
+        self._alias_rows_by_canonical = {}
+        self._alias_adaptive_columns = None
         self.comments = defaultdict(list)
         self.group_order = []
         self._syncing = False
@@ -113,7 +71,16 @@ class SourceEditor(QWidget):
         self.check_header = TableCheckBoxHeader(self.table)
         self.table.setHorizontalHeader(self.check_header)
         self.table.setItemDelegateForColumn(0, TableCheckBoxDelegate(self.table))
+        if self.kind == "whitelist":
+            self.table.setItemDelegateForColumn(3, RuleComboDelegate(self.table))
         self.check_header.sortIndicatorChanged.connect(self._schedule_table_order_sync)
+        self._alias_summary_timer = QTimer(self)
+        self._alias_summary_timer.setSingleShot(True)
+        self._alias_summary_timer.setInterval(80)
+        self._alias_summary_timer.timeout.connect(self._refresh_alias_summaries)
+        self.table.horizontalHeader().sectionResized.connect(
+            self._schedule_alias_summary_refresh
+        )
         self.search = AppSearchLineEdit(self)
         self.search.setPlaceholderText(t("desktop.search_source_data"))
         self.search.setMaximumWidth(320)
@@ -173,6 +140,7 @@ class SourceEditor(QWidget):
         layout.addWidget(self.stack, 1)
         self.table.itemChanged.connect(self._visual_changed)
         self.table.itemChanged.connect(self._selection_changed)
+        self.table.cellDoubleClicked.connect(self._edit_aliases)
         self.table.selectionModel().selectionChanged.connect(self._selection_changed)
         self.check_header.toggled.connect(self._toggle_visible_rows)
         self.view_switch.currentItemChanged.connect(self._set_template_view_mode)
@@ -644,6 +612,7 @@ class SourceEditor(QWidget):
 
     def _parse(self, content: str):
         self.rows = []
+        self._alias_rows_by_canonical = {}
         self.comments = defaultdict(list)
         self.group_order = []
         section = ""
@@ -695,11 +664,13 @@ class SourceEditor(QWidget):
             parts = [part.strip() for part in line.split(",")]
             canonical = parts[0]
             aliases = parts[1:] or [""]
-            existing = next((row for row in self.rows if row["canonical"] == canonical), None)
+            existing = self._alias_rows_by_canonical.get(canonical)
             if existing:
                 existing["aliases"] = list(dict.fromkeys(existing["aliases"] + aliases))
             else:
-                self.rows.append({"canonical": canonical, "aliases": list(dict.fromkeys(aliases))})
+                row = {"canonical": canonical, "aliases": list(dict.fromkeys(aliases))}
+                self.rows.append(row)
+                self._alias_rows_by_canonical[canonical] = row
 
     def _headers(self):
         return [""] + {
@@ -753,6 +724,9 @@ class SourceEditor(QWidget):
         self._rebuild_category_tree()
         self._apply_template_view_mode()
         self._filter_rows()
+        if self.kind == "alias":
+            self._connect_alias_layout_refresh()
+            self._schedule_alias_summary_refresh(2)
 
     def _populate_row(self, row_index: int, row: dict):
         checkbox = QTableWidgetItem()
@@ -776,13 +750,11 @@ class SourceEditor(QWidget):
         if self.kind == "whitelist":
             self._set_text_item(row_index, 1, row.get("channel", ""))
             self._set_text_item(row_index, 2, row.get("value", ""))
-            self._set_combo(row_index, 3, [(t("desktop.rule_exact"), "exact"), (t("desktop.rule_keyword"), "keyword")], row.get("rule_type"))
+            self._set_rule_item(row_index, row.get("rule_type"))
             return
         if self.kind == "alias":
             self._set_text_item(row_index, 1, row.get("canonical", ""))
-            aliases = AliasTagsEditor(row.get("aliases", []), self.table)
-            aliases.changed.connect(self._visual_changed)
-            self.table.setCellWidget(row_index, 2, aliases)
+            self._set_alias_summary(row_index, row.get("aliases", []))
             return
         keys = {
             "template": ("name", "group"),
@@ -793,17 +765,127 @@ class SourceEditor(QWidget):
         for column, key in enumerate(keys):
             self._set_text_item(row_index, column + 1, row.get(key, ""))
 
+    def _set_alias_summary(self, row_index, aliases):
+        values = list(aliases)
+        item = QTableWidgetItem(self._alias_summary_text(values))
+        item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+        item.setToolTip("\n".join(values))
+        self.table.setItem(row_index, 2, item)
+
+    def _alias_summary_text(self, aliases):
+        values = list(aliases)
+        if not values:
+            return ""
+        available_width = max(0, self.table.columnWidth(2) - 12)
+        metrics = self.table.fontMetrics()
+        full_text = ", ".join(values)
+        if metrics.horizontalAdvance(full_text) <= available_width:
+            return full_text
+        best_summary = ""
+        preview = ""
+        for position, value in enumerate(values[:-1], start=1):
+            preview = f"{preview}, {value}" if preview else value
+            summary = f"{preview}  +{len(values) - position}"
+            if metrics.horizontalAdvance(summary) > available_width:
+                break
+            best_summary = summary
+        if best_summary:
+            return best_summary
+        compact = values[0]
+        if len(values) > 1:
+            compact = f"{compact}  +{len(values) - 1}"
+        return metrics.elidedText(
+            compact,
+            Qt.TextElideMode.ElideRight,
+            available_width,
+        )
+
+    def _schedule_alias_summary_refresh(self, logical_index, *_):
+        if self.kind == "alias" and logical_index == 2:
+            self._alias_summary_timer.start()
+
+    def _connect_alias_layout_refresh(self):
+        adaptive_columns = getattr(
+            self.table.horizontalHeader(),
+            "_adaptive_columns",
+            None,
+        )
+        if adaptive_columns is self._alias_adaptive_columns:
+            return
+        self._alias_adaptive_columns = adaptive_columns
+        if adaptive_columns:
+            adaptive_columns.layout_fitted.connect(
+                lambda: self._schedule_alias_summary_refresh(2)
+            )
+
+    def _refresh_alias_summaries(self):
+        if self.kind != "alias" or not self.rows:
+            return
+        self._syncing = True
+        self.table.setUpdatesEnabled(False)
+        blocker = QSignalBlocker(self.table)
+        try:
+            for row_index, row in enumerate(self.rows):
+                item = self.table.item(row_index, 2)
+                if item:
+                    aliases = row.get("aliases", [])
+                    item.setText(self._alias_summary_text(aliases))
+                    item.setToolTip("\n".join(aliases))
+        finally:
+            del blocker
+            self.table.setUpdatesEnabled(True)
+            self._syncing = False
+
+    def _edit_aliases(self, row_index, column):
+        if self.kind != "alias" or column != 2 or row_index >= len(self.rows):
+            return
+        aliases = self._edit_aliases_dialog(self.rows[row_index].get("aliases", []))
+        if aliases is None:
+            return
+        self.rows[row_index]["aliases"] = aliases
+        self._syncing = True
+        try:
+            self._set_alias_summary(row_index, aliases)
+        finally:
+            self._syncing = False
+        self._visual_changed()
+
+    def _edit_aliases_dialog(self, aliases):
+        dialog = QDialog(self)
+        apply_dialog_theme(dialog)
+        dialog.setWindowTitle(t("desktop.edit_aliases"))
+        dialog.resize(480, 360)
+        layout = QVBoxLayout(dialog)
+        hint = BodyLabel(t("desktop.alias_editor_hint"), dialog)
+        editor = AppPlainTextEdit(dialog)
+        editor.setPlainText("\n".join(aliases))
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save, parent=dialog)
+        localize_dialog_buttons(buttons)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(hint)
+        layout.addWidget(editor, 1)
+        layout.addWidget(buttons)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return list(dict.fromkeys(
+            part.strip()
+            for line in editor.toPlainText().splitlines()
+            for part in line.split(",")
+            if part.strip()
+        ))
+
     def _set_text_item(self, row: int, column: int, value: str):
         self.table.setItem(row, column, QTableWidgetItem(value))
 
-    def _set_combo(self, row: int, column: int, options, value):
-        combo = ComboBox(self.table)
-        for label, data in options:
-            combo.addItem(label, userData=data)
-        target = next((index for index in range(combo.count()) if combo.itemData(index) == value), 0)
-        combo.setCurrentIndex(target)
-        combo.currentIndexChanged.connect(self._visual_changed)
-        self.table.setCellWidget(row, column, combo)
+    def _set_rule_item(self, row: int, value: str):
+        options = {
+            "exact": t("desktop.rule_exact"),
+            "keyword": t("desktop.rule_keyword"),
+        }
+        item = QTableWidgetItem(options.get(value, options["exact"]))
+        item.setData(Qt.ItemDataRole.UserRole, value if value in options else "exact")
+        self.table.setItem(row, 3, item)
 
     def _visual_changed(self, *_):
         if self._syncing:
@@ -820,6 +902,10 @@ class SourceEditor(QWidget):
         self._syncing = True
         try:
             self.rows = [self._read_row(row) for row in range(self.table.rowCount())]
+            if self.kind == "alias":
+                self._alias_rows_by_canonical = {
+                    row["canonical"]: row for row in self.rows
+                }
             self.raw_editor.setPlainText(self._serialize())
         finally:
             self._syncing = False
@@ -843,15 +929,14 @@ class SourceEditor(QWidget):
             result = {"url": text(0), "options": text(1)}
         elif self.kind == "whitelist":
             result = {
-                "rule_type": self.table.cellWidget(row, 3).currentData(),
+                "rule_type": self.table.item(row, 3).data(Qt.ItemDataRole.UserRole),
                 "channel": text(0),
                 "value": text(1),
             }
         elif self.kind == "blacklist":
             result = {"keyword": text(0)}
         else:
-            aliases = self.table.cellWidget(row, 2)
-            result = {"canonical": text(0), "aliases": list(aliases.aliases)}
+            result = {"canonical": text(0), "aliases": list(self.rows[row].get("aliases", []))}
         result["_checked"] = checked
         return result
 
@@ -1256,11 +1341,13 @@ class SourceEditor(QWidget):
         }
         row["_checked"] = False
         if self.kind == "alias":
-            existing = next((item for item in self.rows if item["canonical"] == row["canonical"]), None)
+            existing = self._alias_rows_by_canonical.get(row["canonical"])
             if existing:
                 existing["aliases"] = list(dict.fromkeys(existing["aliases"] + row["aliases"]))
                 return
         self.rows.append(row)
+        if self.kind == "alias":
+            self._alias_rows_by_canonical[row["canonical"]] = row
 
     def delete_items(self):
         selected = sorted(self._selected_row_indices(), reverse=True)
@@ -1275,6 +1362,8 @@ class SourceEditor(QWidget):
             return
         selected_set = set(selected)
         self.rows = [row for index, row in enumerate(self.rows) if index not in selected_set]
+        if self.kind == "alias":
+            self._alias_rows_by_canonical = {row["canonical"]: row for row in self.rows}
         self._rebuild_table()
         self.raw_editor.setPlainText(self._serialize())
 

@@ -1,19 +1,21 @@
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QPoint, QRect, Qt
+from PySide6.QtCore import QPoint, QRect, QSettings, Qt
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QWidget
 from qfluentwidgets import TableView
 
-from desktop_ui.pages.settings import SettingsPage
-from desktop_ui.models import ConfigTableModel, MappingTableModel
+from desktop_ui.pages.settings import DataDirectoryDialog, SettingsPage
+from desktop_ui.models import ChannelTableModel, ConfigTableModel, MappingTableModel
+from desktop_ui.sponsor_banner import MarqueeLinkLabel, SponsorBanner
 from desktop_ui.widgets import TableCheckBoxHeader, apply_dialog_theme, localize_dialog_buttons, paint_table_checkbox, warning_message_box
-from utils.i18n import get_language, set_language
+from utils.i18n import get_language, set_language, t
 
 
 class TableCheckBoxPaintingTests(unittest.TestCase):
@@ -66,6 +68,64 @@ class DialogStyleTests(unittest.TestCase):
         self.assertIn("#202020", dialog.styleSheet())
 
 
+class SponsorBannerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def setUp(self):
+        self.language = get_language()
+
+    def tearDown(self):
+        set_language(self.language)
+
+    def test_banner_uses_localized_copy_without_showing_the_url(self):
+        set_language("zh_CN")
+        banner = SponsorBanner()
+        self.addCleanup(banner.deleteLater)
+
+        visible_text = banner.marquee.label.accessibleName()
+        self.assertTrue(visible_text.startswith("优惠码：iptvapi"))
+        self.assertIn("8000万+ IP · 195+ 国家和地区", visible_text)
+        self.assertIn("了解更多", visible_text)
+        self.assertFalse(visible_text.startswith("Helodata"))
+        self.assertNotIn("https://", visible_text)
+        self.assertEqual(banner.logo.accessibleName(), "Helodata")
+        self.assertEqual(banner.logo.width(), 55)
+        self.assertFalse(banner.logo.pixmap().isNull())
+        self.assertIn("<b>优惠码：iptvapi</b>，", banner.marquee.label.text())
+        self.assertNotIn("sponsorLogoContainer { background-color", banner.styleSheet())
+
+    def test_banner_opens_sponsor_link_and_can_be_closed(self):
+        banner = SponsorBanner()
+        self.addCleanup(banner.deleteLater)
+        dismissed = []
+        banner.dismissed.connect(lambda: dismissed.append(True))
+
+        with patch("desktop_ui.sponsor_banner.QDesktopServices.openUrl") as open_url:
+            banner.marquee.link_activated.emit()
+
+        self.assertEqual(open_url.call_args.args[0].toString(), "https://helodata.com?ref=iptvapi2")
+        banner.show()
+        QTest.mouseClick(banner.close_button, Qt.MouseButton.LeftButton)
+        self.assertTrue(banner.isHidden())
+        self.assertFalse(banner.marquee.timer.isActive())
+        self.assertEqual(dismissed, [True])
+
+    def test_marquee_scrolls_only_when_content_overflows(self):
+        marquee = MarqueeLinkLabel()
+        self.addCleanup(marquee.deleteLater)
+        marquee.resize(120, 30)
+        marquee.set_content("Coupon code: iptvapi", ",", "Long sponsor message " * 12, "Visit", "#111827", "#1D4ED8")
+        marquee.show()
+        self.app.processEvents()
+        self.assertTrue(marquee.timer.isActive())
+
+        marquee.resize(5000, 30)
+        self.app.processEvents()
+        self.assertFalse(marquee.timer.isActive())
+
+
 class SettingsEditorLayoutTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -116,6 +176,57 @@ class SettingsEditorLayoutTests(unittest.TestCase):
         legacy_index = model.index(legacy_row, 1)
         self.assertFalse(model.flags(legacy_index) & Qt.ItemFlag.ItemIsEditable)
 
+        proxy_description = next(
+            row["description"] for row in model.all_rows if row["key"] == "http_proxy"
+        )
+        self.assertTrue(
+            "HTTP 代理地址" in proxy_description
+            or "HTTP proxy address" in proxy_description
+        )
+        self.assertNotIn("优惠码", proxy_description)
+        self.assertNotIn("Coupon code", proxy_description)
+
+    def test_data_directory_dialog_shows_current_path_and_saves_selection(self):
+        settings = QSettings()
+        previous = settings.value("runtime/data_directory")
+        self.addCleanup(
+            lambda: settings.setValue("runtime/data_directory", previous)
+            if previous is not None else settings.remove("runtime/data_directory")
+        )
+        dialog = DataDirectoryDialog()
+        self.addCleanup(dialog.close)
+        self.assertEqual(dialog.current_path.text(), os.getcwd())
+        self.assertTrue(dialog.next_path.isHidden())
+
+        with patch(
+            "desktop_ui.pages.settings.QFileDialog.getExistingDirectory",
+            return_value="/tmp/iptv-api-data",
+        ), patch(
+            "desktop_ui.pages.settings.validate_runtime_directory",
+            return_value=Path("/tmp/iptv-api-data"),
+        ):
+            dialog._select_data_directory()
+
+        self.assertEqual(settings.value("runtime/data_directory"), "/tmp/iptv-api-data")
+        self.assertFalse(dialog.next_path.isHidden())
+        self.assertEqual(dialog.next_path.text(), f"{t('desktop.data_directory_next')}\n/tmp/iptv-api-data")
+
+        with patch(
+            "desktop_ui.pages.settings.default_runtime_directory",
+            return_value=Path("/tmp/default-data"),
+        ):
+            dialog._reset_data_directory()
+
+        self.assertIsNone(settings.value("runtime/data_directory"))
+        self.assertEqual(dialog.next_path.text(), f"{t('desktop.data_directory_next')}\n/tmp/default-data")
+
+    def test_settings_page_has_a_single_data_directory_entry(self):
+        page = SettingsPage()
+        self.addCleanup(page.close)
+
+        self.assertIsNotNone(page.data_directory_button)
+        self.assertFalse(hasattr(page, "reset_data_directory_button"))
+
 
 class TableSortingTests(unittest.TestCase):
     @classmethod
@@ -155,6 +266,25 @@ class TableSortingTests(unittest.TestCase):
         self.assertEqual(reset_count, 1)
         self.assertIsNone(model.data(stale_index))
         self.assertFalse(model.setData(stale_index, Qt.CheckState.Checked, Qt.ItemDataRole.CheckStateRole))
+
+    def test_channel_logo_completion_updates_only_indexed_rows(self):
+        model = ChannelTableModel([("name", "Name", None)])
+        self.addCleanup(model.deleteLater)
+        model.set_rows([
+            {"name": "One", "logo": "one.png"},
+            {"name": "Two", "logo": "two.png"},
+            {"name": "Another One", "logo": "one.png"},
+        ])
+        changed_rows = []
+        model.dataChanged.connect(
+            lambda top, bottom, _roles: changed_rows.extend(
+                range(top.row(), bottom.row() + 1)
+            )
+        )
+
+        model._logo_loaded("one.png")
+
+        self.assertEqual(changed_rows, [0, 2])
 
     def test_checkable_header_click_toggles_direction_and_sorts_rows(self):
         model = MappingTableModel([

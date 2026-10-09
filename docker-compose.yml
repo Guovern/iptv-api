@@ -24,4 +24,5 @@ services:
       # Advanced compatibility setting; normally keep the container port unchanged
       NGINX_HTTP_PORT: "8080"
       CDN_URL: ""
+      # Used only for subscription sources and EPG data, not media speed tests
       HTTP_PROXY: ""

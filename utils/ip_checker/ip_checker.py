@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import ipdb
 
 from utils.tools import resource_path
+from utils.resources import bundled_resource_path
 
 
 DATABASE_PATH = "utils/ip_checker/data/qqwry.ipdb"
@@ -24,9 +25,9 @@ def _file_sha256(path: str) -> str:
 
 
 def prepare_database() -> str:
-    compressed_path = resource_path(COMPRESSED_DATABASE_PATH)
+    compressed_path = bundled_resource_path(COMPRESSED_DATABASE_PATH)
     if not os.path.isfile(compressed_path):
-        database_path = resource_path(DATABASE_PATH)
+        database_path = bundled_resource_path(DATABASE_PATH)
         if os.path.isfile(database_path):
             return database_path
         raise FileNotFoundError(

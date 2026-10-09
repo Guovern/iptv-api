@@ -176,6 +176,35 @@ class EmptyDataDiagnosticsTests(unittest.TestCase):
         page.channel_search.setText("sports")
         self.assertEqual([row["name"] for row in page.channel_model.rows], ["Sports One"])
 
+    def test_dashboard_batches_completed_channel_table_refreshes(self):
+        with (
+            patch.object(DashboardPage, "refresh_metrics"),
+            patch.object(DashboardPage, "refresh_schedule"),
+        ):
+            page = DashboardPage()
+        self.addCleanup(page.deleteLater)
+
+        with patch.object(
+            page,
+            "_apply_runtime_rows",
+            wraps=page._apply_runtime_rows,
+        ) as apply_rows:
+            for index in range(3):
+                page._update_runtime_row(
+                    ("News", f"Channel {index}"),
+                    {
+                        "status": "completed",
+                        "category": "News",
+                        "channel": f"Channel {index}",
+                        "valid_count": 1,
+                    },
+                )
+
+            self.assertEqual(apply_rows.call_count, 0)
+            QTest.qWait(75)
+            self.app.processEvents()
+            self.assertEqual(apply_rows.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

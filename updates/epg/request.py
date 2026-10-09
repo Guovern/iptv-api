@@ -535,7 +535,7 @@ async def get_epg(names=None, callback=None, extra_entries=None, pause_wait=None
         async with ClientSession(
                 connector=TCPConnector(limit=performance_settings.epg_fetch_concurrency),
                 auto_decompress=False,
-                trust_env=True,
+                trust_env=False,
         ) as session:
             tasks = [asyncio.create_task(process_run(session, entry)) for entry in entries]
             if tasks:

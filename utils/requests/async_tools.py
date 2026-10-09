@@ -71,7 +71,12 @@ async def fetch_first(
             else:
                 print(message, flush=True)
     if last_error:
-        raise Exception(t("msg.failed_retry_max").format(name=name)) from last_error
+        cause = type(last_error).__name__
+        detail = str(last_error).strip()
+        error = f"{cause}: {detail}" if detail else cause
+        raise Exception(
+            f"{t('msg.failed_retry_max').format(name=name)}: {error}"
+        ) from last_error
     return b"" if as_bytes else ""
 
 
@@ -82,10 +87,9 @@ async def check_ipv6_support_async(reporter=None):
     else:
         print(t("msg.check_ipv6_support"))
     try:
-        async with ClientSession(trust_env=True) as session:
+        async with ClientSession(trust_env=False) as session:
             async with session.get(
                     url,
-                    proxy=config.http_proxy or None,
                     ssl=SSL_CONTEXT,
                     timeout=ClientTimeout(total=10),
             ) as response:

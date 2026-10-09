@@ -7,6 +7,10 @@ from utils.tools import get_real_path, resource_path, format_name
 
 class Alias:
     def __init__(self):
+        self.reload()
+
+    def reload(self):
+        """Reload the current alias file, discarding previous exact and regex mappings."""
         self.primary_to_aliases: dict[str, set[str]] = {}
         self.alias_to_primary: dict[str, str] = {}
         self.pattern_to_primary: list[tuple[re.Pattern, str]] = []

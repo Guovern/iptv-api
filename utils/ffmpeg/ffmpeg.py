@@ -5,7 +5,7 @@ from time import time
 
 from utils.ffmpeg.executable import resolve_ffmpeg_executable
 from utils.i18n import t
-from utils.process import no_window_process_kwargs
+from utils.process import direct_network_env, no_window_process_kwargs
 
 min_measure_time = 1.0
 stability_window = 4
@@ -66,6 +66,7 @@ async def ffmpeg_url(url, headers=None, timeout=10):
             *args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=direct_network_env(),
             **no_window_process_kwargs(),
         )
 

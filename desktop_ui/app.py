@@ -6,14 +6,20 @@ from PySide6.QtGui import QFontDatabase, QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 from qfluentwidgets import Theme, setFontFamilies, setTheme, setThemeColor
 
+from desktop_ui.runtime import RuntimeDirectoryError, prepare_runtime_directory
+
 
 def _prepare_runtime():
     QCoreApplication.setOrganizationName("IPTV-API")
     QCoreApplication.setApplicationName("IPTV-API Desktop")
-    if getattr(sys, "frozen", False):
-        data_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
-        os.makedirs(data_dir, exist_ok=True)
-        os.chdir(data_dir)
+    data_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
+    saved_directory = str(QSettings().value("runtime/data_directory", "") or "").strip()
+    prepare_runtime_directory(
+        sys.argv,
+        fallback_directory=data_dir,
+        prefer_executable_directory=sys.platform == "win32",
+        saved_directory=saved_directory,
+    )
 
 
 def _copy_runtime_resources():
@@ -60,7 +66,12 @@ def _verify_runtime():
 def main():
     if "--verify-runtime" in sys.argv:
         return _verify_runtime()
-    _prepare_runtime()
+    try:
+        _prepare_runtime()
+    except RuntimeDirectoryError as exc:
+        app = QApplication(sys.argv)
+        QMessageBox.critical(None, "IPTV API", str(exc))
+        return 2
     if "--service" in sys.argv:
         _copy_runtime_resources()
         from service.app import run_service

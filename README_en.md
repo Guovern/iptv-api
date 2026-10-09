@@ -10,17 +10,20 @@
 
 <p align="center">
     <a href="https://trendshift.io/repositories/12327" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12327" alt="Guovin%2Fiptv-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-    <a href="https://trendshift.io/repositories/12327?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-12327" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/12327/weekly" alt="Guovin%2Fiptv-api | Trendshift" width="250" height="55"/></a>
+    <a href="https://trendshift.io/repositories/12327?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-12327" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/12327/weekly" alt="Guovin%2Fiptv-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+    <a href="https://www.star-history.com/guovin/iptv-api">
+      <picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank&theme=dark" /><source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank" /><img src="https://api.star-history.com/badge?repo=Guovin/iptv-api&type=rank" alt="Star History Rank" style="height: 55px;" height="55" /></picture>
+    </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Guovin/iptv-api/releases/latest">
+  <a href="https://github.com/Guovin/iptv-api/releases/latest" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/v/release/guovin/iptv-api?label=Version" />
   </a>
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/python-3.14-47c219?label=Python" />
   </a>
-  <a href="https://github.com/Guovin/iptv-api/releases/latest">
+  <a href="https://github.com/Guovin/iptv-api/releases/latest" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/downloads/guovin/iptv-api/total?label=GUI%20Downloads" />
   </a>
   <a href="https://hub.docker.com/repository/docker/guovern/iptv-api">
@@ -29,7 +32,7 @@
   <a href="https://github.com/Guovin/iptv-api/stargazers">
     <img src="https://img.shields.io/github/stars/guovin/iptv-api?label=Stars" />
   </a>
-  <a href="https://github.com/Guovin/iptv-api/fork">
+  <a href="https://github.com/Guovin/iptv-api/fork" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/github/forks/guovin/iptv-api?label=Forks" />
   </a>
 </p>
@@ -80,48 +83,34 @@
 
 ## Sponsors
 
-<p align="center">
-  <a href="https://www.ipwo.net/?ref=githubGuovin">
-    <img src="./docs/images/ipwo.png" alt="Sponsored by IPWO - Residential Proxy Network">
-  </a>
-</p>
-<p align="center">
-  <sub>
-    <a href="https://www.ipwo.net/?ref=githubGuovin"><strong>IPWO</strong></a> provides a stable residential proxy network for compliant scenarios such as public data collection, API debugging, automated testing, and multi-region access verification.
-    Supports HTTP / HTTPS / SOCKS5. Coupon code: <strong><code>0105</code></strong>.
-    Use it only with lawful authorization and in compliance with target site terms.
-  </sub>
-</p>
+| Sponsor | Service                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|:---:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a href="https://helodata.com?ref=iptvapi1"><img src="./docs/images/helodata.png" alt="Helodata" width="150"></a> | <p align="center"><a href="https://helodata.com?ref=iptvapi1"><img src="./docs/images/helodata-banner-en.png" alt="Helodata global proxy network" width="720"></a></p><a href="https://helodata.com?ref=iptvapi1"><strong>Helodata</strong></a> provides global proxy infrastructure covering 195+ countries and regions, with 80M+ ethically sourced residential IPs and support for Residential, ISP, Mobile, and Datacenter proxies, delivering stable and reliable data access for AI, web scraping, and automation applications.Use code <strong><code>iptvapi</code></strong> for an exclusive discount.             |
 
 <p align="center">
   <a href="mailto:360996299@qq.com?subject=Become%20a%20sponsor">Become a sponsor</a>
 </p>
 
-> [!IMPORTANT]
-> 1. Go to the `Govin` WeChat public account and reply with `cdn` to get an acceleration address for subscription sources and channel logos.
-> 2. This project does not provide data sources. Please add your own before generating results. ([How to add data sources?](./docs/tutorial_en.md#add-data-sources-and-more))
-> 3. Result quality depends on the data sources and network conditions; adjust the [configuration](#config) to suit your needs.
-
 ## Core Features
 
 | Feature                       | Support | Description                                                                                                                                                 |
 |:------------------------------|:-------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Custom templates**          |    ✅    | Generate custom channel playlists                                                                                                                           |
-| **Channel aliases**           |    ✅    | Improve channel matching and accuracy, supports regular expressions                                                                                         |
-| **Multi-source aggregation**  |    ✅    | Local sources and subscription sources (supports UA configuration, detects invalid addresses and automatically disables them)                               |
-| **Stream relay**              |    ✅    | Improve playback on weak networks, supports direct browser playback, and automatic transcoding/adaptation                                                   |
-| **Replay/VOD interfaces**     |    ✅    | Fetching and generating replay/VOD interfaces                                                                                                               |
-| **EPG**                       |    ✅    | Fetch and display channel program guides                                                                                                                    |
-| **Channel logos**             |    ✅    | Custom channel logos, supports local additions or a remote library                                                                                          |
-| **Speed test & validation**   |    ✅    | Obtain latency, bitrate, resolution, fps; filter invalid interfaces; supports real-time output                                                              |
-| **Playback screenshots**      |    ✅    | Optional playback capture for channel validation, with GUI preview and batch refresh                                                                        |
-| **Ad filtering**              |    ✅    | Automatically identify and filter no-signal / advertisement placeholder loop sources                                                                        |
-| **Advanced preferences**      |    ✅    | Rate, resolution, blacklist/whitelist, location and ISP custom filters                                                                                      |
-| **Results management**        |    ✅    | Categorized storage and access of results, log recording, unmatched channel records, statistical analysis, freeze filtering/unfreeze rollback, data caching |
-| **Scheduled tasks**           |    ✅    | Scheduled or interval updates                                                                                                                               |
-| **Pause and resume**          |    ✅    | Pause a desktop update and continue from its current progress                                                                                               |
-| **Multi-platform deployment** |    ✅    | Workflows, CLI, GUI, Docker (amd64/arm64/arm v7)                                                                                                            |
-| **More features**             |    ✨    | See [Configuration](#config) section for details                                                                                                            |
+| **Custom&nbsp;templates**          |    ✅    | Generate custom channel playlists                                                                                                                           |
+| **Channel&nbsp;aliases**           |    ✅    | 2,769 channels and 7,254 aliases (including 48 regex rules); automatically normalizes and matches name variants                                            |
+| **Multi-source&nbsp;aggregation**  |    ✅    | Local sources and subscription sources (supports UA configuration, detects invalid addresses and automatically disables them)                               |
+| **Stream&nbsp;relay**              |    ✅    | Improve playback on weak networks, supports direct browser playback, and automatic transcoding/adaptation                                                   |
+| **Replay/VOD&nbsp;interfaces**     |    ✅    | Fetching and generating replay/VOD interfaces                                                                                                               |
+| **EPG**                            |    ✅    | Fetch and display channel program guides                                                                                                                    |
+| **Channel&nbsp;logos**             |    ✅    | Custom channel logos, supports local additions or a remote library                                                                                          |
+| **Speed&nbsp;test&nbsp;&amp;&nbsp;validation** |    ✅    | Obtain latency, bitrate, resolution, fps; filter invalid interfaces; supports real-time output                                                              |
+| **Playback&nbsp;screenshots**      |    ✅    | Optional playback capture for channel validation, with GUI preview and batch refresh                                                                        |
+| **Ad&nbsp;filtering**              |    ✅    | Automatically identify and filter no-signal / advertisement placeholder loop sources                                                                        |
+| **Advanced&nbsp;preferences**      |    ✅    | Rate, resolution, blacklist/whitelist, location and ISP custom filters                                                                                      |
+| **Results&nbsp;management**        |    ✅    | Categorized storage and access of results, log recording, unmatched channel records, statistical analysis, freeze filtering/unfreeze rollback, data caching |
+| **Scheduled&nbsp;tasks**           |    ✅    | Scheduled or interval updates for GUI, CLI, and Docker; does not apply to GitHub Actions                                                                    |
+| **Pause&nbsp;and&nbsp;resume**     |    ✅    | Pause a desktop update and continue from its current progress                                                                                               |
+| **Multi-platform&nbsp;deployment** |    ✅    | Workflows, CLI, GUI, Docker (amd64/arm64/arm v7)                                                                                                            |
+| **More&nbsp;features**             |    ✨    | See [Configuration](#config) section for details                                                                                                            |
 
 ## Config
 
@@ -129,6 +118,9 @@
 > The following configuration items are located in `config/config.ini` and can be modified via the configuration file or
 > environment variables. Save changes and restart to apply. A standalone [configuration reference](./docs/config_en.md)
 > is also available.
+
+> [!TIP]
+> Result quality depends on the data sources and network conditions; adjust these settings to suit your needs.
 
 <details>
 <summary>Click to expand configuration parameters</summary>
@@ -160,12 +152,12 @@
 | app_port                 | Advanced compatibility setting: internal Flask API port. Normally do not change or use it as the user-facing port.                                                                                                                                                                                                                          | 5180                                     |
 | public_scheme            | Advanced compatibility setting: legacy public scheme, used only when `public_url` is empty.                                                                                                                                                                                                                                                 | http                                     |
 | public_domain            | Advanced compatibility setting: legacy public host, used only when `public_url` is empty; defaults to the local IP.                                                                                                                                                                                                                         | 127.0.0.1                                |
-| cdn_url                  | CDN proxy acceleration address(es) for subscription sources, channel logos and other resources. Multiple are supported (comma-separated): subscription and EPG sources fall back through them in order until one succeeds; channel logos use the first address.                                                                                                                                                                                                                     |                                          |
-| http_proxy               | HTTP proxy address, used for network requests such as obtaining subscription sources                                                                                                                                                                                                                                                        |                                          |
+| cdn_url                  | CDN proxy address(es) for supported resources such as subscriptions, EPG, and channel logos. GitHub Actions does not use this setting to accelerate published Pages results. Multiple comma-separated values are supported. |                                          |
+| http_proxy               | HTTP proxy address used only to fetch subscription sources and EPG data; speed tests, media probes, and screenshots remain direct                                                                                                                                                                                                            |                                          |
 | open_local               | Enable local source function, will use the data in the template file and the local source file (`local.txt`).                                                                                                                                                                                                                               | True                                     |
 | open_subscribe           | Enable subscription source function.                                                                                                                                                                                                                                                                                                        | True                                     |
-| open_auto_disable_source | Enable automatic disabling of invalid sources. When the request fails after retries, the content is empty, or no matching value is found, the corresponding address in `config/subscribe.txt` and `config/epg.txt` will be prefixed with # to disable it.                                                                                   | False                                    |
-| open_history             | Enable using historical update results (including interfaces from template and result files), merged into this update.                                                                                                                                                                                                                      | True                                     |
+| open_auto_disable_source | Enable automatic disabling of invalid sources. Failed entries are prefixed with # in `config/subscribe.txt` and `config/epg.txt`; Actions does not commit these changes.                                                                                                                                                                    | False                                    |
+| open_history             | Enable using historical update results (including interfaces from template and result files), merged into this update; Actions only attempts to restore history from a short-lived cache.                                                                                                                                                  | True                                     |
 | open_headers             | Enable to use the request header verification information contained in M3U, used for speed measurement and other operations, some players may not support playing this type of interface with verification information                                                                                                                    | True                                     |
 | user_agent               | Global request User-Agent, used for fetching subscription sources, speed testing, and writing into the m3u result (no need to enable `open_headers`). Leave empty to use the built-in default UA. Priority: interface's own UA > subscription URL UA > global UA > built-in default UA.                                                     |                                          |
 | open_speed_test          | Enable speed test functionality to obtain response time, rate, and resolution.                                                                                                                                                                                                                                                              | True                                     |
@@ -214,6 +206,9 @@
 
 ### Configuration and Results Directory
 
+> [!NOTE]
+> This project does not provide data sources. Add your own before generating results. See [how to add data sources](./docs/tutorial_en.md#add-data-sources-and-more).
+
 ```
 iptv-api/                  # Project root directory
 ├── config                 # Configuration files directory, includes config files, templates, etc.
@@ -227,7 +222,7 @@ iptv-api/                  # Project root directory
 │   └── subscribe.txt      # Channel subscription sources list
 │   └── local.txt          # Local source file
 │   └── epg.txt            # EPG subscription sources list
-└── output                 # Output files directory, includes generated result files, etc.
+└── output                 # Local runtime results; do not commit this directory to Git
     └── data               # Result data cache directory
     └── epg                # EPG result directory
     └── ipv4               # IPv4 result directory
@@ -246,8 +241,24 @@ iptv-api/                  # Project root directory
 
 ### Workflow
 
-Fork this project and initiate workflow updates, detailed steps are available
-at [Detailed Tutorial](./docs/tutorial_en.md)
+Visit the main repository's [GitHub Pages results page](https://guovin.github.io/iptv-api/) to copy online links for player subscriptions, preview files, or download results. No fork or workflow run is needed to use these results. To generate results with your own configuration, follow the deployment steps below.
+
+> [!WARNING]
+> GitHub Actions is intended only for occasional manual generation. Results are published through a Pages artifact
+> and a separate prerelease for every run, and are no longer committed to Git. Legacy
+> `raw.githubusercontent.com/.../output/...` URLs no longer update. Use Docker, the command line, or the GUI for
+> scheduled runs.
+
+After <a href="https://github.com/Guovin/iptv-api/fork" target="_blank" rel="noopener noreferrer">forking this project</a>, select `GitHub Actions` under `Settings → Pages`, then manually run `Generate playlist manually`.
+For online player use, open the Pages page and use the applicable result address. You can preview files there; its
+Download buttons point to the current run's Release assets. Neither path creates Git commits.
+
+```text
+https://your-github-username.github.io/repository-name/result.m3u
+https://your-github-username.github.io/repository-name/result.txt
+```
+
+See the [detailed tutorial](./docs/tutorial_en.md#workflow-deployment) for setup and migration steps.
 
 ### Command Line
 
@@ -288,7 +299,10 @@ Build a package for the current platform:
 pipenv run ui_build
 ```
 
-The legacy Tkinter interface is deprecated, retained temporarily for existing users, and scheduled for removal in a future release. It no longer receives maintenance, bug fixes, or new features. During the transition, start it with `pipenv run legacy_ui` or package it with `pipenv run legacy_ui_build`. Resolution probing requires FFmpeg. Windows can use the bundled nginx-rtmp runtime. On macOS the app detects an installed nginx build with the RTMP module; `IPTV_API_NGINX_PATH` and `IPTV_API_NGINX_RTMP_MODULE` can explicitly select the executable and dynamic module.
+> [!WARNING]
+> The legacy Tkinter interface is deprecated, retained temporarily for existing users, and scheduled for removal in a future release. It no longer receives maintenance, bug fixes, or new features. During the transition, start it with `pipenv run legacy_ui` or package it with `pipenv run legacy_ui_build`.
+
+Resolution probing requires FFmpeg. Windows can use the bundled nginx-rtmp runtime. On macOS the app detects an installed nginx build with the RTMP module; `IPTV_API_NGINX_PATH` and `IPTV_API_NGINX_RTMP_MODULE` can explicitly select the executable and dynamic module.
 
 ### Docker
 
@@ -309,7 +323,8 @@ docker compose up -d
 docker pull guovern/iptv-api:latest
 ```
 
-🚀 Proxy acceleration (use this command if pulling fails, but it may download an older version):
+> [!CAUTION]
+> If the official image cannot be pulled, use the following proxy; it may provide an older image version.
 
 ```bash
 docker pull docker.1ms.run/guovern/iptv-api:latest
@@ -330,6 +345,7 @@ docker run -d -p 80:8080 guovern/iptv-api
 | PUBLIC_PORT     | Compatibility setting: mapped host port used when `PUBLIC_URL` is empty                              | 80        |
 | NGINX_HTTP_PORT | Advanced compatibility setting: internal container HTTP port; normally keep the default              | 8080      |
 
+> [!NOTE]
 > When IPv6 is enabled on the host/Docker, the container automatically listens on IPv6 addresses as well, with no extra configuration; in IPv4-only or IPv6-disabled environments it is skipped automatically.
 
 If you need to modify environment variables, add the following parameters after the above run command:
@@ -379,11 +395,10 @@ Log endpoints return the compatible plain-text format by default; add `?format=j
 
 **RTMP Streaming:**
 
-> [!NOTE]
-> 1. For server deployments, set the complete public address through `PUBLIC_URL`; legacy `PUBLIC_DOMAIN` and `PUBLIC_PORT` remain supported.
-> 2. When streaming is enabled, obtained interfaces such as subscription sources are streamed by default. Use this only for content you own, are authorized to redistribute, or need for closed/internal testing.
-> 3. To stream local videos, create `config/hls` and place files named after their channels in it. The program streams them to the corresponding channels.
-> 4. In Mainland China, ensure that content authorization, copyright, network-audiovisual, and broadcasting requirements are satisfied. Do not distribute, relay, or publicly expose unauthorized live streams or program sources.
+> [!WARNING]
+> Enabling streaming relays obtained interfaces such as subscription sources by default. Use this only for content you own, are authorized to redistribute, or need for closed/internal testing. In Mainland China, ensure content authorization, copyright, network-audiovisual, and broadcasting requirements are met; do not distribute, relay, or publicly expose unauthorized live streams or program sources.
+
+For server deployments, set the complete public address through `PUBLIC_URL`; legacy `PUBLIC_DOMAIN` and `PUBLIC_PORT` remain supported. To stream local videos, create `config/hls` and place files named after their channels in it; the program streams them to the corresponding channels.
 
 | Streaming Endpoint | Description                          |
 |:-------------------|:-------------------------------------|
@@ -413,6 +428,9 @@ Follow my GitHub account [Guovin](https://github.com/Guovin) to find more useful
 ### WeChat public account
 
 WeChat public account search for Govin, or scan the code to receive updates and learn more tips:
+
+> [!TIP]
+> Reply with `cdn` to get an acceleration address for subscription sources, channel logos, and related resources.
 
 ![Wechat public account](./static/images/qrcode.jpg)
 
@@ -449,4 +467,5 @@ Contact via email: [360996299@qq.com](mailto:360996299@qq.com)
 
 [AGPL-3.0](./LICENSE) License &copy; 2024-PRESENT [Govin](https://github.com/guovin)
 
-> Note: This project is licensed under AGPL-3.0. If you operate a modified version as a network service (e.g., hosted service or publicly published container/image), you must provide users with the complete corresponding source code (including your modifications). See: https://www.gnu.org/licenses/agpl-3.0.html
+> [!IMPORTANT]
+> This project is licensed under AGPL-3.0. If you operate a modified version as a network service (e.g., hosted service or publicly published container/image), you must provide users with the complete corresponding source code (including your modifications). See: https://www.gnu.org/licenses/agpl-3.0.html

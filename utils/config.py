@@ -15,6 +15,7 @@ import pytz
 
 from utils.performance import PERFORMANCE_MODES, get_performance_settings
 from utils.process import no_window_process_kwargs
+from utils.resources import resource_path
 
 
 @dataclass(frozen=True)
@@ -218,22 +219,6 @@ def _get_primary_ipv4() -> str | None:
         address = match.group(1) if match else ""
         return address if _is_usable_ipv4(address) else None
     return None
-
-
-def resource_path(relative_path, persistent=False):
-    """
-    Get the resource path
-    """
-    base_path = os.path.abspath(".")
-    total_path = os.path.join(base_path, relative_path)
-    if persistent or os.path.exists(total_path):
-        return total_path
-    else:
-        try:
-            base_path = sys._MEIPASS
-            return os.path.join(base_path, relative_path)
-        except Exception:
-            return total_path
 
 
 def get_resolution_value(resolution_str):
@@ -816,10 +801,12 @@ class ConfigManager:
                 for env_name in candidates:
                     env_val = self._environ.get(env_name)
                     if env_val is not None:
-                        # Compose expands `${PUBLIC_URL:-}` to an empty string
-                        # when it is not configured. Treat that value as absent
-                        # so a URL saved in the mounted config remains effective.
-                        if key == "public_url" and not str(env_val).strip():
+                        # Empty Compose placeholders must not clear values saved
+                        # in the mounted configuration.
+                        if (
+                            key in {"public_url", "http_proxy"}
+                            and not str(env_val).strip()
+                        ):
                             continue
                         self.config.set(section, key, env_val)
                         self._sources[(section, key)] = f"环境变量 {env_name}"

@@ -95,9 +95,14 @@ def add_manual_channel_result(channel_name: str, url: str) -> bool:
 
 
 def delete_manual_channel_results(channel_name: str, urls: list[str]) -> int:
+    return delete_manual_channel_results_many({channel_name: urls})
+
+
+def delete_manual_channel_results_many(channel_urls: dict[str, list[str]]) -> int:
     target, lines = _read_lines(constants.local_path)
     values = {
         f"{channel_name.strip()},{url.strip()}"
+        for channel_name, urls in channel_urls.items()
         for url in urls
         if channel_name.strip() and url.strip()
     }

@@ -61,6 +61,7 @@ class LogsPage(QWidget):
         self.viewer.setLineWrapMode(AppPlainTextEdit.LineWrapMode.NoWrap)
         self._last_viewed_path = None
         self.cleared_offsets = {}
+        self._cleared_checkpoints = {}
         actions = QHBoxLayout()
         actions.addWidget(self.selector)
         actions.addWidget(self.search, 1)
@@ -125,6 +126,9 @@ class LogsPage(QWidget):
         self._update_more_actions()
         path = self.paths[max(0, self.selector.currentIndex())][1]
         if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            if path in self.cleared_offsets:
+                self.cleared_offsets[path] = 0
+                self._cleared_checkpoints.pop(path, None)
             content = "" if path in self.cleared_offsets else self._empty_log_message(path)
         else:
             size = os.path.getsize(path)
@@ -133,6 +137,19 @@ class LogsPage(QWidget):
                 offset = 0
                 self.cleared_offsets[path] = 0
             with open(path, "rb") as file:
+                checkpoint = self._cleared_checkpoints.get(path)
+                if checkpoint is not None:
+                    identity, position, tail, run_id = checkpoint
+                    stat = os.fstat(file.fileno())
+                    file.seek(max(0, position - len(tail)))
+                    if (
+                        identity != (stat.st_dev, stat.st_ino)
+                        or file.read(len(tail)) != tail
+                        or run_id != read_run_state().get("run_id")
+                    ):
+                        offset = 0
+                        self.cleared_offsets[path] = 0
+                        self._cleared_checkpoints.pop(path, None)
                 file.seek(offset)
                 content = file.read().decode("utf-8", errors="replace")
         # QPlainTextEdit does not need a trailing empty line, and normalizing it
@@ -195,7 +212,18 @@ class LogsPage(QWidget):
 
     def clear_view(self):
         path = self.paths[max(0, self.selector.currentIndex())][1]
-        self.cleared_offsets[path] = os.path.getsize(path) if os.path.exists(path) else 0
+        self.cleared_offsets[path] = 0
+        self._cleared_checkpoints.pop(path, None)
+        if os.path.isfile(path):
+            with open(path, "rb") as file:
+                stat = os.fstat(file.fileno())
+                position = stat.st_size
+                file.seek(max(0, position - 128))
+                self._cleared_checkpoints[path] = (
+                    (stat.st_dev, stat.st_ino), position, file.read(),
+                    read_run_state().get("run_id"),
+                )
+                self.cleared_offsets[path] = position
         self.viewer.clear()
 
     def _update_more_actions(self):

@@ -7,6 +7,12 @@ import requests
 import service.rtmp as rtmp
 
 
+class HlsTempPathTests(unittest.TestCase):
+    def test_linux_uses_docker_nginx_hls_directory(self):
+        with patch.object(rtmp.sys, "platform", "linux"):
+            self.assertEqual(rtmp._get_hls_temp_path("/runtime/nginx"), "/tmp/hls")
+
+
 class RtmpServiceProbeTests(unittest.TestCase):
     def test_stats_probe_accepts_rtmp_xml(self):
         response = Mock(content=b"<rtmp><uptime>1</uptime></rtmp>")

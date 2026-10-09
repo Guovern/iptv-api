@@ -3,7 +3,7 @@ import json
 import subprocess
 
 from utils.ffmpeg.executable import resolve_ffprobe_executable
-from utils.process import no_window_process_kwargs
+from utils.process import direct_network_env, no_window_process_kwargs
 
 
 def _parse_probe_data(data: dict) -> dict | None:
@@ -89,6 +89,7 @@ async def probe_url(url: str, headers: dict = None, timeout: int = 10) -> dict |
             *args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=direct_network_env(),
             **no_window_process_kwargs(),
         )
         try:
@@ -173,6 +174,7 @@ def probe_url_sync(url: str, headers: dict = None, timeout: int = 10) -> dict | 
             stderr=subprocess.PIPE,
             text=True,
             timeout=timeout,
+            env=direct_network_env(),
             **no_window_process_kwargs(),
         )
     except subprocess.TimeoutExpired:
@@ -230,6 +232,7 @@ async def get_resolution_ffprobe(url: str, headers: dict = None, timeout: int = 
             *args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=direct_network_env(),
             **no_window_process_kwargs(),
         )
         try:
